@@ -56,80 +56,117 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // --- Button Boids Animation ---
-    const boidsCanvas = document.getElementById('boids-canvas');
-    if (boidsCanvas) {
-        const ctx = boidsCanvas.getContext('2d');
-        let width, height;
-        const boids = [];
-        const numBoids = 15;
+    // --- Button 3D Boids Animation (THREE.js) ---
+    const boidsBtn = document.getElementById('portfolio-btn');
+    const canvas = document.getElementById('boids-canvas');
 
-        const resize = () => {
-            width = boidsCanvas.offsetWidth;
-            height = boidsCanvas.offsetHeight;
-            boidsCanvas.width = width * window.devicePixelRatio;
-            boidsCanvas.height = height * window.devicePixelRatio;
-            ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
-        };
+    if (canvas && window.THREE) {
+        const THREE = window.THREE;
+        const width = boidsBtn.offsetWidth;
+        const height = boidsBtn.offsetHeight;
 
-        window.addEventListener('resize', resize);
-        resize();
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
+        camera.position.z = 25;
 
-        // Simple Boids Class
-        class Boid {
-            constructor() {
-                this.x = Math.random() * width;
-                this.y = Math.random() * height;
-                this.vx = (Math.random() - 0.5) * 2;
-                this.vy = (Math.random() - 0.5) * 2;
-                this.size = 1.5;
-            }
+        const renderer = new THREE.WebGLRenderer({
+            canvas: canvas,
+            alpha: true,
+            antialias: true
+        });
+        renderer.setSize(width, height);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
-            update() {
-                this.x += this.vx;
-                this.y += this.vy;
+        // Geometry & Material (Same as Portfolio)
+        const geometry = new THREE.ConeGeometry(0.5, 2, 3);
+        geometry.rotateX(Math.PI / 2);
+        const material = new THREE.MeshPhongMaterial({
+            color: 0x10b981,
+            emissive: 0x064e3b,
+            shininess: 100,
+            transparent: true,
+            opacity: 0.8
+        });
 
-                // Bounce off edges
-                if (this.x < 0 || this.x > width) this.vx *= -1;
-                if (this.y < 0 || this.y > height) this.vy *= -1;
+        const count = 30;
+        const mesh = new THREE.InstancedMesh(geometry, material, count);
+        scene.add(mesh);
 
-                // Simple flocking (cohesion)
-                boids.forEach(other => {
-                    const dx = other.x - this.x;
-                    const dy = other.y - this.y;
-                    const dist = Math.sqrt(dx * dx + dy * dy);
-                    if (dist > 0 && dist < 30) {
-                        this.vx += dx * 0.001;
-                        this.vy += dy * 0.001;
-                    }
-                });
+        // Lights
+        scene.add(new THREE.AmbientLight(0xffffff, 0.5));
+        const pointLight = new THREE.PointLight(0x10b981, 2, 50);
+        pointLight.position.set(0, 0, 10);
+        scene.add(pointLight);
 
-                // Clamp speed
-                const speed = Math.sqrt(this.vx * this.vx + this.vy * this.vy);
-                if (speed > 1.5) {
-                    this.vx = (this.vx / speed) * 1.5;
-                    this.vy = (this.vy / speed) * 1.5;
-                }
-            }
+        // Boids Data
+        const dummy = new THREE.Object3D();
+        const positions = [];
+        const velocities = [];
 
-            draw() {
-                ctx.beginPath();
-                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-                ctx.fillStyle = '#10b981';
-                ctx.fill();
-            }
+        // Initial Bounds Calculation
+        function getBounds() {
+            const aspect = width / height;
+            const vFOV = THREE.MathUtils.degToRad(camera.fov);
+            const visibleHeight = 2 * Math.tan(vFOV / 2) * camera.position.z;
+            const visibleWidth = visibleHeight * aspect;
+            return {
+                x: visibleWidth / 1.5, // Slightly less than half to keep boids mostly visible
+                y: visibleHeight / 1.5,
+                z: 15
+            };
         }
 
-        for (let i = 0; i < numBoids; i++) boids.push(new Boid());
+        let bounds = getBounds();
 
-        const animateBoids = () => {
-            ctx.clearRect(0, 0, width, height);
-            boids.forEach(b => {
-                b.update();
-                b.draw();
-            });
-            requestAnimationFrame(animateBoids);
-        };
-        animateBoids();
+        for (let i = 0; i < count; i++) {
+            positions.push(new THREE.Vector3(
+                (Math.random() - 0.5) * bounds.x * 2,
+                (Math.random() - 0.5) * bounds.y * 2,
+                (Math.random() - 0.5) * bounds.z
+            ));
+            velocities.push(new THREE.Vector3(
+                (Math.random() - 0.5) * 0.3,
+                (Math.random() - 0.5) * 0.3,
+                (Math.random() - 0.5) * 0.1
+            ));
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            for (let i = 0; i < count; i++) {
+                const pos = positions[i];
+                const vel = velocities[i];
+
+                pos.add(vel);
+
+                // Boundary Wrap (Teleport to other side for continuous flow)
+                if (pos.x > bounds.x) pos.x = -bounds.x;
+                if (pos.x < -bounds.x) pos.x = bounds.x;
+                if (pos.y > bounds.y) pos.y = -bounds.y;
+                if (pos.y < -bounds.y) pos.y = bounds.y;
+                if (pos.z > bounds.z) pos.z = -bounds.z;
+                if (pos.z < -bounds.z) pos.z = bounds.z;
+
+                dummy.position.copy(pos);
+                dummy.lookAt(pos.clone().add(vel));
+                dummy.updateMatrix();
+                mesh.setMatrixAt(i, dummy.matrix);
+            }
+
+            mesh.instanceMatrix.needsUpdate = true;
+            renderer.render(scene, camera);
+        }
+
+        window.addEventListener('resize', () => {
+            const newWidth = boidsBtn.offsetWidth;
+            const newHeight = boidsBtn.offsetHeight;
+            camera.aspect = newWidth / newHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(newWidth, newHeight);
+            bounds = getBounds(); // Recalculate on resize
+        });
+
+        animate();
     }
 });
