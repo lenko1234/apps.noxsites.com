@@ -1,0 +1,2136 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nox Sites | Diseño Web Premium & Experiencias Digitales</title>
+    <meta name="description"
+        content="Portfolio de diseño web profesional. Landing pages, plataformas e-commerce, aplicaciones web y sitios corporativos con tecnología de vanguardia y animaciones impactantes.">
+    <meta name="keywords"
+        content="diseño web, portfolio, landing pages, e-commerce, desarrollo web, experiencias digitales">
+    <meta name="theme-color" content="#000000">
+    <meta name="color-scheme" content="dark">
+
+    <link rel="icon" type="image/png" href="../favicon.png">
+    <link rel="apple-touch-icon" href="../favicon.png">
+
+    <!-- Hreflang tags for multilingual SEO -->
+    <link rel="alternate" hreflang="es" href="https://noxsites.com/es/" />
+    <link rel="alternate" hreflang="en" href="https://noxsites.com/" />
+    <link rel="alternate" hreflang="x-default" href="https://noxsites.com/" />
+
+    <!-- Auto Language Detection -->
+    <script>
+        (function () {
+            const preferredLang = localStorage.getItem('preferredLanguage');
+
+            if (!preferredLang) {
+                const userLang = navigator.language || navigator.userLanguage;
+                if (!userLang.startsWith('es')) {
+                    localStorage.setItem('preferredLanguage', 'en');
+                    window.location.href = '/';
+                } else {
+                    localStorage.setItem('preferredLanguage', 'es');
+                }
+            } else if (preferredLang === 'en' && window.location.pathname.includes('/es')) {
+                window.location.href = '/';
+            }
+        })();
+    </script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;500&family=Plus+Jakarta+Sans:wght@800&display=swap"
+        rel="stylesheet">
+
+
+    <style>
+        :root {
+            --emerald: #10b981;
+            --emerald-dim: rgba(16, 185, 129, 0.1);
+            --emerald-bright: #34d399;
+        }
+
+        /* === HERO SECTION STYLES === */
+        #hero-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            z-index: 1;
+            opacity: 1;
+            transition: opacity 0.8s ease;
+            pointer-events: none;
+            /* Prevents blocking clicks on elements behind */
+        }
+
+        .hero-title {
+            font-size: 0.875rem;
+            letter-spacing: 0.4em;
+        }
+
+        @media (max-width: 768px) {
+            .hero-title {
+                font-size: 0.7rem;
+                letter-spacing: 0.2em;
+            }
+        }
+
+        #hero-ui {
+            position: fixed;
+            top: 30px;
+            left: 30px;
+            z-index: 15;
+            pointer-events: none;
+            opacity: 1;
+            transition: opacity 0.8s ease;
+        }
+
+        @media (max-width: 768px) {
+            #hero-ui {
+                top: 20px;
+                left: 20px;
+            }
+        }
+
+        .hero-content {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2;
+            opacity: 1;
+            transition: opacity 0.8s ease;
+            pointer-events: none;
+        }
+
+        .hero-content * {
+            pointer-events: none;
+        }
+
+        /* === MAIN BODY STYLES === */
+        html,
+        body {
+            background-color: #000;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            /* Changed from 4000vh - no longer using native scroll */
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+            overflow: hidden;
+            /* Prevent native scrolling completely */
+            color: #fff;
+            touch-action: none;
+            /* Critical: Prevent browser from handling touch gestures */
+            -webkit-overflow-scrolling: auto;
+            /* Disable momentum scrolling on iOS */
+        }
+
+        /* Prevent text selection only in hero area to protect boids interaction */
+        #hero-canvas,
+        #hero-ui,
+        .hero-content {
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+        }
+
+        body::-webkit-scrollbar {
+            display: none;
+        }
+
+        .viewport {
+            position: fixed;
+            inset: 0;
+            background: radial-gradient(circle at center, #020804 0%, #000 100%);
+            overflow: hidden;
+        }
+
+        /* SVG Narrative Layer */
+        #svg-layer {
+            position: absolute;
+            inset: 0;
+            z-index: 5;
+            pointer-events: none;
+        }
+
+        .thread-main {
+            fill: none;
+            stroke: var(--emerald);
+            stroke-width: 1.5;
+            stroke-linecap: square;
+            stroke-linejoin: miter;
+            filter: drop-shadow(0 0 5px rgba(16, 185, 129, 0.4));
+        }
+
+        .thread-branch {
+            fill: none;
+            stroke: var(--emerald);
+            stroke-width: 1;
+            stroke-dasharray: 4 4;
+            opacity: 0.4;
+        }
+
+        .head-dot {
+            fill: #fff;
+            filter: drop-shadow(0 0 10px var(--emerald-bright));
+        }
+
+        /* Content Stage */
+        #stage {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
+        }
+
+        .node-fragment {
+            position: absolute;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            display: none;
+            will-change: opacity, transform, letter-spacing, filter;
+            max-width: 95vw;
+            /* Aumentado para textos en español */
+            z-index: 100;
+            /* Siempre por encima de las imágenes */
+        }
+
+        .primary-text {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: -0.05em;
+            line-height: 0.85;
+            color: #fff;
+            text-align: center;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+
+        .data-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px;
+            color: var(--emerald);
+            letter-spacing: 0.4em;
+            opacity: 0.6;
+            margin-top: 15px;
+            display: block;
+            text-align: center;
+        }
+
+        .cursor {
+            display: inline-block;
+            width: 8px;
+            height: 1em;
+            background: var(--emerald);
+            margin-left: 2px;
+            vertical-align: middle;
+            animation: blink 0.8s infinite;
+        }
+
+        @keyframes blink {
+            50% {
+                opacity: 0;
+            }
+        }
+
+        .vignette {
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle, transparent 40%, rgba(0, 0, 0, 0.8) 100%);
+            z-index: 30;
+            pointer-events: none;
+        }
+
+        @media (max-width: 768px) {
+            .vignette {
+                background: radial-gradient(circle, transparent 60%, rgba(0, 0, 0, 0.7) 100%);
+            }
+        }
+
+        /* UI elements */
+        .system-marker {
+            position: fixed;
+            bottom: 30px;
+            left: 30px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 9px;
+            color: var(--emerald);
+            opacity: 0.3;
+            letter-spacing: 2px;
+        }
+
+        /* Project Images */
+        .project-image-container {
+            position: absolute;
+            pointer-events: auto;
+            opacity: 0;
+            transition: opacity 0.8s ease;
+            transform: translate(-50%, -50%);
+            z-index: 200;
+            /* Above text and boids */
+            cursor: pointer;
+        }
+
+        .project-image-link {
+            display: block;
+            position: relative;
+            overflow: hidden;
+            border: 2px solid var(--emerald);
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.3),
+                0 0 40px rgba(16, 185, 129, 0.1);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            background: transparent;
+            /* Eliminado el fondo negro que oscurecía */
+        }
+
+        .project-image-link:hover {
+            border-color: var(--emerald-bright);
+            box-shadow: 0 0 30px rgba(16, 185, 129, 0.5),
+                0 0 60px rgba(16, 185, 129, 0.2);
+            transform: scale(1.02);
+        }
+
+        .project-image {
+            display: block;
+            width: 100%;
+            min-width: 450px;
+            max-width: 600px;
+            max-height: 70vh;
+            object-fit: cover;
+            object-position: top;
+            height: auto;
+            opacity: 1;
+            transition: opacity 0.4s ease, transform 0.4s ease;
+        }
+
+        @media (max-width: 768px) {
+            .project-image {
+                min-width: 0;
+                width: 85vw;
+                max-width: 400px;
+            }
+        }
+
+        .project-image-link:hover .project-image {
+            opacity: 1;
+            transform: scale(1.05);
+        }
+
+        .project-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg,
+                    rgba(16, 185, 129, 0.1) 0%,
+                    transparent 50%);
+            pointer-events: none;
+        }
+
+        /* === CTA SECTION STYLES === */
+
+        /* Section Header */
+        .section-header {
+            position: absolute;
+            top: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            color: var(--emerald);
+            opacity: 0;
+            letter-spacing: 0.4em;
+            text-align: center;
+            z-index: 15;
+            pointer-events: none;
+        }
+
+        /* CTA Container */
+        #cta-section {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 35;
+            background: radial-gradient(circle at center, #020804 0%, #000 100%);
+        }
+
+        #cta-section.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        /* Matrix Grid Background */
+        .grid-line-h {
+            position: absolute;
+            width: 100%;
+            height: 1px;
+            background: rgba(16, 185, 129, 0.5);
+            box-shadow: 0 0 12px rgba(16, 185, 129, 0.4);
+        }
+
+        .grid-line-v {
+            position: absolute;
+            height: 100%;
+            width: 1px;
+            background: rgba(16, 185, 129, 0.5);
+            box-shadow: 0 0 12px rgba(16, 185, 129, 0.4);
+        }
+
+        /* Bulb Light & Shine Effects */
+        .bulb-text {
+            position: relative;
+            text-shadow: 0 0 20px rgba(16, 185, 129, 0.9), 0 0 40px rgba(16, 185, 129, 0.4);
+            animation: flicker 4s infinite;
+            display: inline-block;
+        }
+
+        .shine-overlay {
+            position: absolute;
+            inset: 0;
+            color: white;
+            opacity: 0;
+            filter: blur(6px);
+            pointer-events: none;
+            white-space: nowrap;
+            animation: shine 5s ease-in-out infinite;
+        }
+
+        .scanline {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.15);
+            opacity: 0.2;
+            pointer-events: none;
+            animation: scanline 4s linear infinite;
+        }
+
+        /* Terminal Buttons */
+        .terminal-btn {
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px solid rgba(16, 185, 129, 0.4);
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            backdrop-filter: blur(4px);
+            padding: 1.25rem 2rem;
+            font-family: 'JetBrains Mono', monospace;
+            letter-spacing: 0.3em;
+            font-size: 0.75rem;
+            font-weight: bold;
+            color: var(--emerald);
+            cursor: pointer;
+            z-index: 100;
+        }
+
+        .terminal-btn:hover {
+            background: rgba(16, 185, 129, 0.15);
+            border-color: var(--emerald);
+            transform: translateY(-2px);
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.2);
+        }
+
+        .terminal-btn:active {
+            transform: translateY(0) scale(0.98);
+            box-shadow: 0 0 30px rgba(16, 185, 129, 0.4);
+            background: rgba(16, 185, 129, 0.25);
+        }
+
+        .terminal-btn::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transform: translateX(-100%);
+            transition: transform 0.6s ease;
+        }
+
+        .terminal-btn:hover::before {
+            transform: translateX(100%);
+        }
+
+        .glow-dot {
+            width: 8px;
+            height: 8px;
+            background-color: var(--emerald);
+            border-radius: 50%;
+            box-shadow: 0 0 12px var(--emerald);
+            animation: pulse 2s infinite;
+        }
+
+        /* Animations */
+        @keyframes flicker {
+
+            0%,
+            18%,
+            22%,
+            62%,
+            64%,
+            66%,
+            70%,
+            100% {
+                opacity: 1;
+            }
+
+            20%,
+            63%,
+            65%,
+            69% {
+                opacity: 0.5;
+                filter: brightness(0.8);
+            }
+        }
+
+        @keyframes shine {
+
+            0%,
+            10% {
+                opacity: 0;
+                transform: translateX(-10%) skewX(-20deg);
+            }
+
+            20% {
+                opacity: 0.6;
+                transform: translateX(0%) skewX(-20deg);
+            }
+
+            30%,
+            100% {
+                opacity: 0;
+                transform: translateX(10%) skewX(-20deg);
+            }
+        }
+
+        @keyframes scanline {
+            0% {
+                top: -10%;
+            }
+
+            100% {
+                top: 110%;
+            }
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+                opacity: 1;
+                box-shadow: 0 0 12px var(--emerald);
+            }
+
+            50% {
+                transform: scale(1.3);
+                opacity: 0.6;
+                box-shadow: 0 0 20px var(--emerald);
+            }
+        }
+
+        @keyframes simple-pulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+
+            50% {
+                transform: scale(1.1);
+                opacity: 0.4;
+            }
+        }
+
+        /* --- MODAL STYLES --- */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.9);
+            backdrop-filter: blur(12px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 1rem;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.4s ease;
+            touch-action: none;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal-container {
+            width: 100%;
+            max-width: 700px;
+            max-height: 90vh;
+            background: rgba(8, 8, 8, 0.98);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            position: relative;
+            padding: 2.5rem;
+            overflow-y: auto;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+            clip-path: polygon(0 0, 95% 0, 100% 5%, 100% 100%, 5% 100%, 0 95%);
+            transform: scale(0.95) translateY(20px);
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            touch-action: pan-y;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .modal-container::-webkit-scrollbar {
+            display: none;
+        }
+
+        .modal-overlay.active .modal-container {
+            transform: scale(1) translateY(0);
+        }
+
+        .timeline {
+            position: relative;
+            margin-top: 1rem;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 20px;
+            top: 0;
+            width: 1px;
+            height: 0%;
+            background: linear-gradient(to bottom, var(--emerald), transparent);
+            transition: height 2s ease-out;
+            transition-delay: 0.5s;
+        }
+
+        .modal-overlay.active .timeline::before {
+            height: 100%;
+        }
+
+        .step-item {
+            position: relative;
+            padding-left: 50px;
+            margin-bottom: 1rem;
+            opacity: 0;
+            transform: translateX(-20px);
+            transition: all 0.6s ease-out;
+        }
+
+        .modal-overlay.active .step-item {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .step-dot {
+            position: absolute;
+            left: 12px;
+            top: 0;
+            width: 16px;
+            height: 16px;
+            background: #000;
+            border: 2px solid var(--emerald);
+            border-radius: 50%;
+            z-index: 2;
+            box-shadow: 0 0 10px var(--emerald-dim);
+        }
+
+        .modal-overlay.active .step-item:nth-child(1) {
+            transition-delay: 0.8s;
+        }
+
+        .modal-overlay.active .step-item:nth-child(2) {
+            transition-delay: 1.3s;
+        }
+
+        .modal-overlay.active .step-item:nth-child(3) {
+            transition-delay: 1.8s;
+        }
+
+        .modal-overlay.active .step-item:nth-child(4) {
+            transition-delay: 2.3s;
+        }
+
+        .step-content {
+            background: rgba(20, 20, 20, 0.5);
+            border: 1px solid rgba(16, 185, 129, 0.1);
+            padding: 1rem;
+            border-radius: 4px;
+            transition: border-color 0.3s;
+        }
+
+        .step-content:hover {
+            border-color: var(--emerald);
+        }
+
+        .scanline {
+            width: 100%;
+            height: 100px;
+            background: linear-gradient(to bottom, transparent, rgba(16, 185, 129, 0.05), transparent);
+            position: absolute;
+            top: -100px;
+            left: 0;
+            animation: scan 6s linear infinite;
+            pointer-events: none;
+        }
+
+        @keyframes scan {
+            0% {
+                top: -100px;
+            }
+
+            100% {
+                top: 100%;
+            }
+        }
+
+        /* Utility classes to replace Tailwind */
+        .flex {
+            display: flex;
+        }
+
+        .justify-between {
+            justify-content: space-between;
+        }
+
+        .justify-center {
+            justify-content: center;
+        }
+
+        .items-start {
+            align-items: flex-start;
+        }
+
+        .items-center {
+            align-items: center;
+        }
+
+        .space-x-2>*+* {
+            margin-left: 0.5rem;
+        }
+
+        .mb-1 {
+            margin-bottom: 0.25rem;
+        }
+
+        .mb-6 {
+            margin-bottom: 1.5rem;
+        }
+
+        .text-xs {
+            font-size: 0.75rem;
+            line-height: 1rem;
+        }
+
+        .text-base {
+            font-size: 1rem;
+            line-height: 1.5rem;
+        }
+
+        .text-2xl {
+            font-size: 1.5rem;
+            line-height: 2rem;
+        }
+
+        .text-\[9px\] {
+            font-size: 9px;
+        }
+
+        .text-\[10px\] {
+            font-size: 10px;
+        }
+
+        .text-emerald-500 {
+            color: var(--emerald);
+        }
+
+        .text-white {
+            color: #fff;
+        }
+
+        .text-gray-400 {
+            color: #9ca3af;
+        }
+
+        .font-bold {
+            font-weight: 700;
+        }
+
+        .uppercase {
+            text-transform: uppercase;
+        }
+
+        .italic {
+            font-style: italic;
+        }
+
+        .tracking-widest {
+            letter-spacing: 0.1em;
+        }
+
+        .tracking-\[0\.3em\] {
+            letter-spacing: 0.3em;
+        }
+
+        .leading-relaxed {
+            line-height: 1.625;
+        }
+
+        .transition-colors {
+            transition-property: color;
+            transition-duration: 0.3s;
+        }
+
+        .hover\:text-white:hover {
+            color: #fff;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        @media (max-width: 767px) {
+            .hidden-mobile {
+                display: none;
+            }
+        }
+
+        @media (min-width: 768px) {
+            .md\:block {
+                display: block;
+            }
+        }
+
+        /* Language Switcher */
+        #language-switcher {
+            position: fixed;
+            top: 30px;
+            right: 30px;
+            z-index: 1000;
+            display: flex;
+            gap: 0.5rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            letter-spacing: 0.2em;
+            pointer-events: auto;
+        }
+
+        @media (max-width: 768px) {
+            #language-switcher {
+                top: 20px;
+                right: 20px;
+            }
+
+            .lang-btn {
+                padding: 0.4rem 0.8rem;
+                font-size: 10px;
+            }
+        }
+
+        .lang-btn {
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            color: rgba(16, 185, 129, 0.5);
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            backdrop-filter: blur(4px);
+        }
+
+        .lang-btn:hover {
+            border-color: var(--emerald);
+            color: var(--emerald);
+            background: rgba(16, 185, 129, 0.1);
+        }
+
+        .lang-btn.active {
+            border-color: var(--emerald);
+            color: var(--emerald-bright);
+            background: rgba(16, 185, 129, 0.15);
+            box-shadow: 0 0 15px rgba(16, 185, 129, 0.2);
+        }
+
+        /* Scroll Indicator */
+        #scroll-indicator {
+            position: fixed;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%) translateY(0);
+            z-index: 20;
+            opacity: 1;
+            transition: opacity 0.6s ease, transform 0.6s ease;
+            pointer-events: none;
+        }
+
+        #scroll-indicator.hidden {
+            opacity: 0;
+            transform: translateX(-50%) translateY(60px);
+        }
+
+        .scroll-arrow {
+            width: 1px;
+            height: 60px;
+            background: linear-gradient(to bottom, transparent, var(--emerald), transparent);
+            margin: 0 auto;
+            position: relative;
+            animation: scroll-bounce 2s ease-in-out infinite;
+        }
+
+        .scroll-arrow::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 4px solid transparent;
+            border-right: 4px solid transparent;
+            border-top: 6px solid var(--emerald);
+            filter: drop-shadow(0 0 4px rgba(16, 185, 129, 0.6));
+        }
+
+        @keyframes scroll-bounce {
+
+            0%,
+            100% {
+                transform: translateY(0);
+                opacity: 0.6;
+            }
+
+            50% {
+                transform: translateY(10px);
+                opacity: 1;
+            }
+        }
+
+        /* --- CONTACT FORM STYLES --- */
+        .contact-form {
+            display: grid;
+            gap: 1.5rem;
+            margin-top: 1rem;
+        }
+
+        .form-group {
+            position: relative;
+        }
+
+        .form-label {
+            display: block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 9px;
+            color: var(--emerald);
+            letter-spacing: 0.2rem;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            opacity: 0.8;
+        }
+
+        .form-input {
+            width: 100%;
+            background: rgba(20, 20, 20, 0.6);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            padding: 0.8rem 1rem;
+            color: #fff;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+            outline: none;
+        }
+
+        .form-input:focus {
+            border-color: var(--emerald);
+            background: rgba(16, 185, 129, 0.05);
+            box-shadow: 0 0 15px rgba(16, 185, 129, 0.1);
+        }
+
+        .form-input::placeholder {
+            color: rgba(255, 255, 255, 0.2);
+        }
+
+        .submit-btn {
+            width: 100%;
+            margin-top: 1rem;
+            padding: 1rem;
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid var(--emerald);
+            color: var(--emerald);
+            font-family: 'JetBrains Mono', monospace;
+            letter-spacing: 0.4em;
+            font-size: 11px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+        }
+
+        .submit-btn:hover {
+            background: var(--emerald);
+            color: #000;
+            box-shadow: 0 0 25px rgba(16, 185, 129, 0.4);
+        }
+
+        .submit-btn:active {
+            transform: scale(0.98);
+        }
+
+        textarea.form-input {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .form-input option {
+            background-color: #0a0a0a;
+            color: var(--emerald);
+            padding: 10px;
+        }
+
+        .close-btn {
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            padding: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .close-btn:hover {
+            transform: scale(1.1);
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Back to Home -->
+    <div style="position: fixed; top: 30px; left: 30px; z-index: 1000; pointer-events: auto;">
+        <a href="/" class="lang-btn"
+            style="display: flex; align-items: center; gap: 0.5rem; text-transform: uppercase;">
+            <span style="font-size: 14px;">←</span> Soluciones
+        </a>
+    </div>
+
+    <!-- Language Switcher -->
+    <div id="language-switcher">
+        <a href="/" class="lang-btn" onclick="localStorage.setItem('preferredLanguage', 'en')">EN</a>
+        <span class="lang-btn active">ES</span>
+    </div>
+
+    <!-- HERO SECTION -->
+    <div id="hero-canvas"></div>
+
+    <div id="hero-ui">
+        <h1 class="hero-title" style="font-weight: bold; color: var(--emerald);">
+            DISEÑOS WEB PREMIUM</h1>
+        <div
+            style="font-size: 11px; opacity: 0.7; margin-top: 0.5rem; line-height: 1.6; font-family: 'JetBrains Mono', monospace;">
+            POPULATION: 3000 UNITS<br>
+            CORE_STATUS: <span id="core-status" style="color: var(--emerald-bright);">IDLE</span><br>
+            SYS_SYNC: <span id="hero-scroll-offset">0000</span>
+        </div>
+    </div>
+
+    <div class="hero-content" id="hero-content">
+        <div style="text-align: center;">
+            <p
+                style="font-size: 10px; letter-spacing: 0.6em; opacity: 0.4; margin-bottom: 1.5rem; animation: simple-pulse 2s infinite; font-family: 'JetBrains Mono', monospace;">
+                INITIATING_SYSTEM_BOOT</p>
+            <h2 class="bulb-text"
+                style="font-size: clamp(2.5rem, 8vw, 6rem); font-weight: 900; letter-spacing: -0.05em; margin-bottom: 2rem; font-family: 'Plus Jakarta Sans', sans-serif;">
+                &gt; WEBS BY<br>NOX
+            </h2>
+            <p style="font-size: 11px; letter-spacing: 0.3em; opacity: 0.6; font-family: 'JetBrains Mono', monospace;">
+                DESPLÁZATE PARA EXPLORAR PROYECTOS</p>
+        </div>
+    </div>
+
+    <!-- Scroll Indicator -->
+    <div id="scroll-indicator">
+        <div class="scroll-arrow"></div>
+    </div>
+
+    <div class="system-marker">DISEÑO_WEB: EXPERIENCIAS_PREMIUM // ESTADO: DISPONIBLE</div>
+
+    <div class="viewport">
+        <div class="vignette"></div>
+
+        <svg id="svg-layer">
+            <path id="main-path" class="thread-main" d=""></path>
+            <path id="branch-a" class="thread-branch" d=""></path>
+            <path id="branch-b" class="thread-branch" d=""></path>
+            <circle id="head" class="head-dot" r="3.5"></circle>
+        </svg>
+
+        <div id="stage"></div>
+
+        <!-- PROJECTS Section Header -->
+        <div class="section-header" id="projects-header">
+            // SECCIÓN: PROYECTOS
+        </div>
+
+        <!-- CTA SECTION -->
+        <div id="cta-section">
+            <!-- Matrix Grid Background -->
+            <div style="position: absolute; inset: 0; opacity: 0.25; pointer-events: none; z-index: 0;">
+                <div id="h-lines" style="position: absolute; inset: -100px; height: calc(100% + 200px);"></div>
+                <div id="v-lines" style="position: absolute; inset: -100px; width: calc(100% + 200px);"></div>
+                <div
+                    style="position: absolute; inset: 0; background: radial-gradient(circle at 50% 50%, transparent 0%, black 85%);">
+                </div>
+            </div>
+
+            <!-- Status Header -->
+            <div
+                style="margin-bottom: 2.5rem; text-align: center; opacity: 0.9; text-transform: uppercase; letter-spacing: 0.3em; font-size: 10px; font-family: 'JetBrains Mono', monospace;">
+                <div
+                    style="display: flex; align-items: center; justify-content: center; gap: 0.75rem; margin-bottom: 1.5rem;">
+                    <div class="glow-dot"></div>
+                    <p>ESTADO: <span
+                            style="color: var(--emerald-bright); font-weight: bold;">DISPONIBLE_PARA_PROYECTOS</span>
+                    </p>
+                </div>
+                <div
+                    style="display: flex; flex-wrap: wrap; justify-content: center; gap: 2rem; color: rgba(16, 185, 129, 0.5); font-weight: bold;">
+                    <span>// TIEMPO_RESPUESTA: &lt;24H</span>
+                    <span class="hidden-mobile">// ZONA_HORARIA: GMT-3</span>
+                    <span class="hidden-mobile">// SISTEMA: ESTABLE</span>
+                </div>
+            </div>
+
+            <!-- Bulb Light Header -->
+            <div style="position: relative; margin-bottom: 4rem; text-align: center; padding: 0 1rem;">
+                <!-- Soft Glow Background -->
+                <div
+                    style="position: absolute; inset: -3rem; background: rgba(16, 185, 129, 0.1); filter: blur(80px); opacity: 0.4; transition: opacity 1s;">
+                </div>
+
+                <h1
+                    style="position: relative; font-size: clamp(2rem, 7vw, 5rem); font-weight: 900; letter-spacing: -0.05em; line-height: 1; user-select: none; font-family: 'Plus Jakarta Sans', sans-serif;">
+                    <!-- Shine Layer -->
+                    <span class="shine-overlay" aria-hidden="true">> ¿LISTO PARA COMENZAR TU PROYECTO?</span>
+
+                    <!-- Main Flickering Text -->
+                    <span class="bulb-text">
+                        > ¿LISTO PARA COMENZAR<br style="display: block;">TU PROYECTO?
+                    </span>
+
+                    <!-- Moving Scanline -->
+                    <div class="scanline"></div>
+                </h1>
+            </div>
+
+            <!-- Terminal Buttons -->
+            <div
+                style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 2rem; width: 100%; max-width: 50rem; padding: 0 1.5rem; pointer-events: auto;">
+                <button class="terminal-btn" onclick="openMethodModal()">
+                    [NUESTRO_METODO]
+                </button>
+                <button class="terminal-btn" onclick="openContactModal()">
+                    [INICIAR_CONTACTO]
+                </button>
+            </div>
+
+            <!-- System Footer -->
+            <div
+                style="position: absolute; bottom: 2.5rem; width: 100%; display: flex; justify-content: space-between; padding: 0 3rem; font-size: 9px; opacity: 0.4; text-transform: uppercase; letter-spacing: 0.4em; font-weight: bold; font-family: 'JetBrains Mono', monospace;">
+                <div>SYS_OS: MATRIX_CORE_v4</div>
+                <div id="scroll-display">SYNC_OFFSET: [0000]</div>
+                <div class="hidden md:block">OPS: DISPONIBLE_MUNDIALMENTE</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const stage = document.getElementById('stage');
+        const mainPath = document.getElementById('main-path');
+        const branchA = document.getElementById('branch-a');
+        const branchB = document.getElementById('branch-b');
+        const head = document.getElementById('head');
+        const svgLayer = document.getElementById('svg-layer');
+
+        /**
+         * WEB DESIGN SERVICES TIMELINE
+         * Coordinates kept in safe-zone (20% to 80%) to fit the screen perfectly.
+         * behavior: 1 (Scale), 2 (Spacing), 3 (Blur), 4 (Skew)
+         * image: optional project screenshot
+         * url: optional project link
+         */
+        const nodes = [
+            { id: 1, pos: [50, 25], text: "LANDING\nPAGES", label: "CONVERSIÓN_MÁXIMA", life: [6, 18], behavior: 1, image: "../assets/EsquinaJardin.png", url: "https://viveroesquinajardin.com.ar/" },
+            { id: 2, pos: [75, 45], text: "PLATAFORMAS\nE-COMMERCE", label: "VENTAS_24/7", life: [18, 28], behavior: 2, hasBranch: true, image: "../assets/ElectroAguirre.png", url: "https://www.electroaguirre.com.ar/" },
+            { id: 3, pos: [35, 70], text: "APLICACIONES\nWEB", label: "EXPERIENCIAS_INTERACTIVAS", life: [28, 42], behavior: 3, image: "../assets/FGHerreria.png", url: "https://www.fgherreria.com.ar/" },
+            { id: 4, pos: [70, 30], text: "SITIOS\nCORPORATIVOS", label: "PRESENCIA_PREMIUM", life: [44, 56], behavior: 4, hasBranch: true, image: "../assets/Panzo.png", url: "https://panzo.com.ar/" },
+            { id: 5, pos: [50, 60], text: "DISEÑO\nPORTFOLIO", label: "IMPACTO_VISUAL", life: [58, 70], behavior: 1 }
+        ];
+
+        // Create Text Elements (without images)
+        const textElements = nodes.map(n => {
+            const div = document.createElement('div');
+            div.className = 'node-fragment';
+            div.style.left = `${n.pos[0]}%`;
+            div.style.top = `${n.pos[1]}%`;
+
+            div.innerHTML = `
+                <div class="primary-text" style="font-size: 7vw;"><span class="content"></span><span class="cursor"></span></div>
+                <span class="data-label"></span>
+            `;
+            stage.appendChild(div);
+            return { ...n, el: div, content: div.querySelector('.content'), labelEl: div.querySelector('.data-label'), cursor: div.querySelector('.cursor') };
+        });
+
+        // Create Image Elements separately with random positions
+        const imageElements = nodes.filter(n => n.image && n.url).map(n => {
+            const imageDiv = document.createElement('div');
+            imageDiv.className = 'project-image-container';
+
+            const isMobile = window.innerWidth < 768;
+
+            // Random position logic: centered on X for mobile, random on desktop
+            let randomX, randomY;
+            const topMargin = 30; // Clear top 30% for the header
+
+            if (isMobile) {
+                // Mobile: Strictly centered horizontal with a tiny jitter (45-55%)
+                randomX = 50 + (Math.random() - 0.5) * 10;
+                // Mobile: Random vertical but respecting topMargin (30% to 85%)
+                randomY = topMargin + Math.random() * (85 - topMargin);
+
+                // Vertical safety: if too close to the text, push it far away
+                const textY = n.pos[1];
+                if (Math.abs(randomY - textY) < 30) {
+                    // Only push up if it stays below the topMargin
+                    randomY = textY > (topMargin + 15) ? (topMargin + 5) : 85;
+                }
+            } else {
+                // Desktop logic: More aggressive safety margins for larger images
+                // Assuming max-width 600px and max-height 70vh
+                const safeX = (320 / window.innerWidth) * 100;
+                const safeY = 40; // 40% margin for vertical safety (top/bottom)
+
+                const marginX = Math.max(safeX, 25);
+                const marginY_bottom = safeY;
+                const effectiveTopMargin = 40; // Keep away from title/header
+
+                randomX = marginX + Math.random() * (100 - marginX * 2);
+                randomY = effectiveTopMargin + Math.random() * (100 - effectiveTopMargin - marginY_bottom);
+
+                // Diagonal safety distance logic for desktop
+                const textX = n.pos[0];
+                const textY = n.pos[1];
+                let distance = Math.sqrt(Math.pow(randomX - textX, 2) + Math.pow(randomY - textY, 2));
+                if (distance < 40) {
+                    randomX = textX > 50 ? marginX : (100 - marginX);
+                    randomY = textY > 50 ? effectiveTopMargin : (100 - marginY_bottom);
+                }
+            }
+
+            imageDiv.style.left = `${randomX}%`;
+            imageDiv.style.top = `${randomY}%`;
+
+            // Create responsive WebP images with PNG fallback
+            const imageName = n.image.replace('../assets/', '').replace('.png', '');
+            imageDiv.innerHTML = `
+                <a href="${n.url}" class="project-image-link" target="_blank" rel="noopener noreferrer" data-project-link="true">
+                    <picture>
+                        <source 
+                            type="image/webp"
+                            srcset="../assets/${imageName}-small.webp 613w,
+                                    ../assets/${imageName}-medium.webp 900w,
+                                    ../assets/${imageName}-large.webp 1334w"
+                            sizes="(max-width: 768px) 85vw, 600px">
+                        <img 
+                            src="${n.image}" 
+                            alt="${n.text.replace('\n', ' ')}" 
+                            class="project-image"
+                            loading="lazy"
+                            decoding="async"
+                            draggable="false">
+                    </picture>
+                    <div class="project-overlay"></div>
+                </a>
+            `;
+            stage.appendChild(imageDiv);
+            return { ...n, imageEl: imageDiv };
+        });
+
+        // Robust Orthogonal path logic: strictly horizontal then vertical
+        function getOrthogonal(x1, y1, x2, y2, p) {
+            let midX, midY;
+            if (p <= 0.5) {
+                midX = x1 + (x2 - x1) * (p * 2);
+                midY = y1;
+            } else {
+                midX = x2;
+                midY = y1 + (y2 - y1) * ((p - 0.5) * 2);
+            }
+            return { x: midX, y: midY, isCorner: p > 0.5 };
+        }
+
+        // === PAGINATED SCROLL SYSTEM ===
+        const SECTIONS = [
+            { id: 0, name: 'HERO', progress: 0 },
+            { id: 1, name: 'LANDING_PAGES', progress: 12 },
+            { id: 2, name: 'E_COMMERCE', progress: 23 },
+            { id: 3, name: 'WEB_APPS', progress: 35 },
+            { id: 4, name: 'CORPORATE_SITES', progress: 50 },
+            { id: 5, name: 'PORTFOLIO_DESIGN', progress: 64 },
+            { id: 6, name: 'CTA', progress: 87.5 }
+        ];
+
+        let currentSection = 0;
+        let isAnimating = false;
+        let virtualProgress = 0; // Simulated scroll progress (0-100)
+        let ctaScrollOffset = 0; // Extra scroll offset within CTA section
+        let targetCtaScrollOffset = 0; // Target offset for smooth animation
+        let isAutoAdvancing = false; // Flag for auto-advance in projects
+        const TRANSITION_DURATION = 1500; // ms - Slower for better readability
+        const CTA_SCROLL_INCREMENT = 5; // How much to increment per scroll in CTA
+        const CTA_ANIMATION_SPEED = 0.15; // Lerp speed for smooth animation
+        const AUTO_ADVANCE_SPEED = 0.015; // Very slow auto-advance in projects section
+
+        // Easing function for smooth transitions
+        function easeInOutCubic(t) {
+            return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+        }
+
+        // Auto-advance in projects section
+        function autoAdvanceProjects() {
+            if (isAutoAdvancing && currentSection >= 1 && currentSection <= 5) {
+                // Only auto-advance within current section bounds
+                const currentSectionData = SECTIONS[currentSection];
+                const nextSectionData = SECTIONS[currentSection + 1];
+
+                if (nextSectionData && virtualProgress < nextSectionData.progress - 0.5) {
+                    virtualProgress += AUTO_ADVANCE_SPEED;
+                    update();
+                }
+                requestAnimationFrame(autoAdvanceProjects);
+            }
+        }
+
+        // Smooth lerp for CTA offset
+        function animateCtaOffset() {
+            if (Math.abs(targetCtaScrollOffset - ctaScrollOffset) > 0.01) {
+                ctaScrollOffset += (targetCtaScrollOffset - ctaScrollOffset) * CTA_ANIMATION_SPEED;
+                update();
+                requestAnimationFrame(animateCtaOffset);
+            } else {
+                ctaScrollOffset = targetCtaScrollOffset;
+            }
+        }
+
+        // Animate to a target section
+        function animateToSection(targetSection) {
+            if (isAnimating || targetSection < 0 || targetSection >= SECTIONS.length) return;
+            if (targetSection === currentSection) return;
+
+            isAnimating = true;
+            isAutoAdvancing = false; // Stop auto-advance during transition
+            const startProgress = virtualProgress;
+            const endProgress = SECTIONS[targetSection].progress;
+            const startTime = performance.now();
+
+            // Reset CTA scroll offset when leaving CTA
+            if (currentSection === SECTIONS.length - 1 && targetSection !== SECTIONS.length - 1) {
+                ctaScrollOffset = 0;
+                targetCtaScrollOffset = 0;
+            }
+
+            function animate(currentTime) {
+                const elapsed = currentTime - startTime;
+                const progress = Math.min(elapsed / TRANSITION_DURATION, 1);
+                const easedProgress = easeInOutCubic(progress);
+
+                virtualProgress = startProgress + (endProgress - startProgress) * easedProgress;
+                update(); // Update all animations
+
+                if (progress < 1) {
+                    requestAnimationFrame(animate);
+                } else {
+                    currentSection = targetSection;
+                    virtualProgress = endProgress;
+                    isAnimating = false;
+                    update();
+
+                    // Start auto-advance if in projects section (1-5)
+                    if (currentSection >= 1 && currentSection <= 5) {
+                        isAutoAdvancing = true;
+                        autoAdvanceProjects();
+                    }
+                }
+            }
+
+            requestAnimationFrame(animate);
+        }
+
+        // Navigate to next/previous section
+        function goToNextSection() {
+            // If in CTA section, increment scroll offset instead of changing section
+            if (currentSection === SECTIONS.length - 1) {
+                // Limit maximum scroll offset to prevent infinite scrolling
+                const MAX_CTA_SCROLL = 100;
+                if (targetCtaScrollOffset < MAX_CTA_SCROLL) {
+                    targetCtaScrollOffset += CTA_SCROLL_INCREMENT;
+                    animateCtaOffset();
+                }
+                return;
+            }
+            animateToSection(currentSection + 1);
+        }
+
+        function goToPreviousSection() {
+            // If in CTA section with scroll offset, decrement it first
+            if (currentSection === SECTIONS.length - 1 && targetCtaScrollOffset > 0) {
+                targetCtaScrollOffset = Math.max(0, targetCtaScrollOffset - CTA_SCROLL_INCREMENT);
+                animateCtaOffset();
+                return;
+            }
+            animateToSection(currentSection - 1);
+        }
+
+        // Desktop: Mouse Wheel
+        let wheelTimeout;
+
+        window.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            if (isAnimating) return;
+
+            clearTimeout(wheelTimeout);
+            wheelTimeout = setTimeout(() => {
+                if (e.deltaY > 0) {
+                    goToNextSection();
+                } else {
+                    goToPreviousSection();
+                }
+            }, 50); // Small debounce to prevent multiple triggers
+        }, { passive: false });
+
+        // Mobile: Touch Swipe with Intent Detection
+        let touchStartY = 0;
+        let touchStartX = 0;
+        let touchEndY = 0;
+        let touchEndX = 0;
+        let touchStartTime = 0;
+        let isTouchingProjectLink = false;
+
+        window.addEventListener('touchstart', (e) => {
+            touchStartY = e.touches[0].clientY;
+            touchStartX = e.touches[0].clientX;
+            touchStartTime = Date.now();
+
+            // Check if touching a project link
+            const target = e.target.closest('[data-project-link]');
+            isTouchingProjectLink = !!target;
+        }, { passive: false });
+
+        window.addEventListener('touchend', (e) => {
+            touchEndY = e.changedTouches[0].clientY;
+            touchEndX = e.changedTouches[0].clientX;
+            handleSwipe();
+        }, { passive: false });
+
+        function handleSwipe() {
+            if (isAnimating) return;
+
+            const swipeDistanceY = touchStartY - touchEndY;
+            const swipeDistanceX = touchStartX - touchEndX;
+            const totalMovement = Math.sqrt(swipeDistanceY * swipeDistanceY + swipeDistanceX * swipeDistanceX);
+            const touchDuration = Date.now() - touchStartTime;
+
+            const minSwipeDistance = 50; // Minimum swipe distance in pixels
+            const intentThreshold = 10; // If moved more than this, it's a scroll, not a click
+
+            // If touching a project link and movement is minimal, it's a click - let the link work
+            if (isTouchingProjectLink && totalMovement < intentThreshold && touchDuration < 300) {
+                // This is a tap/click - allow the link to navigate
+                return;
+            }
+
+            // If touching a project link but moved significantly, prevent the link and scroll instead
+            if (isTouchingProjectLink && totalMovement >= intentThreshold) {
+                // Prevent the link from opening
+                const target = document.elementFromPoint(touchStartX, touchStartY);
+                const link = target?.closest('[data-project-link]');
+                if (link) {
+                    link.addEventListener('click', preventClick, { once: true });
+                }
+            }
+
+            // Standard swipe detection for page navigation
+            if (Math.abs(swipeDistanceY) < minSwipeDistance) return;
+
+            if (swipeDistanceY > 0) {
+                // Swipe up - go to next section
+                goToNextSection();
+            } else {
+                // Swipe down - go to previous section
+                goToPreviousSection();
+            }
+        }
+
+        // Helper function to prevent accidental clicks during scroll
+        function preventClick(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        // Keyboard Navigation
+        window.addEventListener('keydown', (e) => {
+            if (isAnimating) return;
+
+            // Don't intercept keyboard if user is typing in an input/textarea
+            const isTyping = e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT';
+            if (isTyping) return;
+
+            switch (e.key) {
+                case 'ArrowDown':
+                case 'PageDown':
+                case ' ': // Space
+                    e.preventDefault();
+                    goToNextSection();
+                    break;
+                case 'ArrowUp':
+                case 'PageUp':
+                    e.preventDefault();
+                    goToPreviousSection();
+                    break;
+                case 'Home':
+                    e.preventDefault();
+                    animateToSection(0);
+                    break;
+                case 'End':
+                    e.preventDefault();
+                    animateToSection(SECTIONS.length - 1);
+                    break;
+            }
+        });
+
+        // Update function now uses virtualProgress instead of real scroll
+
+        function update() {
+            const w = window.innerWidth;
+            const h = window.innerHeight;
+            svgLayer.setAttribute('width', w);
+            svgLayer.setAttribute('height', h);
+
+            const progress = virtualProgress; // Use virtual progress instead of scroll position
+
+            let dMain = "";
+            let dBA = "";
+            let dBB = "";
+            let hX, hY;
+
+            const tailLength = 15;
+            const tStart = Math.max(0, progress - tailLength);
+
+            // DRAW MAIN NARRATIVE THREAD
+            for (let i = 0; i < nodes.length - 1; i++) {
+                const n1 = nodes[i], n2 = nodes[i + 1];
+                const sStart = Math.max(tStart, n1.life[0]);
+                const sEnd = Math.min(progress, n2.life[0]);
+
+                if (sStart < sEnd) {
+                    const p1 = (sStart - n1.life[0]) / (n2.life[0] - n1.life[0]);
+                    const p2 = (sEnd - n1.life[0]) / (n2.life[0] - n1.life[0]);
+
+                    const x1 = n1.pos[0] * w / 100, y1 = n1.pos[1] * h / 100;
+                    const x2 = n2.pos[0] * w / 100, y2 = n2.pos[1] * h / 100;
+
+                    const pA = getOrthogonal(x1, y1, x2, y2, p1);
+                    const pB = getOrthogonal(x1, y1, x2, y2, p2);
+
+                    if (dMain === "") dMain = `M ${pA.x} ${pA.y}`;
+                    if (!pA.isCorner && pB.isCorner) dMain += ` L ${x2} ${y1}`;
+                    dMain += ` L ${pB.x} ${pB.y}`;
+
+                    if (sEnd === progress) { hX = pB.x; hY = pB.y; }
+
+                    // BRANCHING CIRCUITRY (90-deg branching)
+                    if (n1.hasBranch && progress > n1.life[0]) {
+                        const bProg = Math.min((progress - n1.life[0]) / 8, 1);
+                        const bDist = Math.min(w * 0.1, 100);
+
+                        // Branch A (sideways then down)
+                        const bA_End = getOrthogonal(x1, y1, x1 - bDist, y1 + bDist, bProg);
+                        dBA += `M ${x1} ${y1} L ${x1 - bDist} ${y1} L ${x1 - bDist} ${bA_End.y}`;
+
+                        // Branch B (sideways then up)
+                        const bB_End = getOrthogonal(x1, y1, x1 + bDist, y1 - bDist, bProg);
+                        dBB += `M ${x1} ${y1} L ${x1 + bDist} ${y1} L ${x1 + bDist} ${bB_End.y}`;
+                    }
+                }
+            }
+
+            mainPath.setAttribute('d', dMain);
+            branchA.setAttribute('d', dBA);
+            branchB.setAttribute('d', dBB);
+
+            if (hX !== undefined) {
+                head.setAttribute('cx', hX); head.setAttribute('cy', hY);
+                head.style.opacity = 1;
+            } else { head.style.opacity = 0; }
+
+            // DISCOVER TEXT
+            textElements.forEach(node => {
+                const isActive = progress >= node.life[0] && progress <= node.life[1];
+                if (isActive) {
+                    node.el.style.display = 'block';
+                    const local = (progress - node.life[0]) / (node.life[1] - node.life[0]);
+
+                    // Typing Animation (Keyboard)
+                    const typeP = Math.min(local / 0.4, 1);
+                    const chars = Math.floor(node.text.length * typeP);
+                    node.content.innerText = node.text.substring(0, chars);
+                    node.cursor.style.display = typeP < 1 ? 'inline-block' : 'none';
+                    node.labelEl.innerText = typeP > 0.8 ? node.label : "";
+
+                    // Opacity Transition
+                    let op = 1;
+                    if (local < 0.2) op = local / 0.2;
+                    else if (local > 0.8) op = 1 - (local - 0.8) / 0.2;
+                    node.el.style.opacity = op;
+
+                    // Heterogeneous Patterns (No Vertical, No Rotation)
+                    const transform = [];
+                    node.el.style.letterSpacing = "0em";
+                    node.el.style.filter = "none";
+
+                    if (node.behavior === 1) { // Pulsing scale
+                        transform.push(`scale(${0.8 + local * 0.3})`);
+                    } else if (node.behavior === 2) { // Tracking reveal
+                        node.el.style.letterSpacing = `${(1 - local) * 0.7}em`;
+                    } else if (node.behavior === 3) { // Blur discovery - fast fade
+                        const blurProgress = Math.min(local / 0.2, 1); // Complete blur in first 20%
+                        node.el.style.filter = `blur(${(1 - blurProgress) * 12}px)`;
+                    } else if (node.behavior === 4) { // Skew
+                        transform.push(`skewX(${(1 - local) * 15}deg)`);
+                    }
+
+                    node.el.style.transform = `translate(-50%, -50%) ${transform.join(' ')}`;
+                } else {
+                    node.el.style.display = 'none';
+                }
+            });
+
+            // Animate Images independently
+            imageElements.forEach(imgNode => {
+                const isActive = progress >= imgNode.life[0] && progress <= imgNode.life[1];
+                if (isActive) {
+                    const local = (progress - imgNode.life[0]) / (imgNode.life[1] - imgNode.life[0]);
+
+                    // Image appearance speed boost
+                    const imageDelay = 0.25;
+                    const animationDuration = 0.1;
+                    const imageP = Math.max(0, Math.min(1, (local - imageDelay) / animationDuration));
+                    imgNode.imageEl.style.opacity = imageP;
+                    imgNode.imageEl.style.pointerEvents = imageP > 0.1 ? 'auto' : 'none'; // Only interactive when visible
+                } else {
+                    imgNode.imageEl.style.opacity = 0;
+                    imgNode.imageEl.style.pointerEvents = 'none'; // Critical fix: don't block clicks
+                }
+            });
+
+            // === HERO VISIBILITY CONTROL ===
+            const heroContentEl = document.getElementById('hero-content');
+            const heroUIEl = document.getElementById('hero-ui');
+            const heroCanvasEl = document.getElementById('hero-canvas');
+
+            if (progress > 6) {
+                // Hide hero completely after leaving hero section
+                if (heroContentEl) heroContentEl.style.display = 'none';
+                if (heroUIEl) heroUIEl.style.display = 'none';
+            } else {
+                // Show hero in hero section
+                if (heroContentEl) heroContentEl.style.display = 'flex';
+                if (heroUIEl) heroUIEl.style.display = 'block';
+            }
+
+            // Fade out hero elements based on progress
+            const heroFade = Math.max(0, 1 - (progress / 5));
+            if (heroContentEl) heroContentEl.style.opacity = heroFade;
+            if (heroUIEl) heroUIEl.style.opacity = heroFade;
+
+            // Scroll indicator fade and slide down
+            const scrollIndicator = document.getElementById('scroll-indicator');
+            if (scrollIndicator) {
+                if (progress > 5) {
+                    scrollIndicator.style.opacity = '0';
+                    scrollIndicator.style.transform = 'translateX(-50%) translateY(60px)';
+                } else {
+                    const indicatorFade = Math.max(0, 1 - (progress / 4));
+                    const slideDown = (progress / 4) * 60; // Slide down 60px as it fades
+                    scrollIndicator.style.opacity = indicatorFade.toString();
+                    scrollIndicator.style.transform = `translateX(-50%) translateY(${slideDown}px)`;
+                }
+            }
+        }
+
+        window.addEventListener('resize', update);
+        update(); // Initial run
+
+        // Subtle Mouse Depth
+        window.addEventListener('mousemove', (e) => {
+            const x = (e.clientX / window.innerWidth - 0.5) * 10;
+            const y = (e.clientY / window.innerHeight - 0.5) * 10;
+            svgLayer.style.transform = `translate(${x}px, ${y}px)`;
+            stage.style.transform = `translate(${x / 2}px, ${y / 2}px)`;
+        });
+
+        // === CTA SECTION CONTROL ===
+        const ctaSection = document.getElementById('cta-section');
+        const projectsHeader = document.getElementById('projects-header');
+        const hLinesContainer = document.getElementById('h-lines');
+        const vLinesContainer = document.getElementById('v-lines');
+        const scrollDisplay = document.getElementById('scroll-display');
+
+        // Create Matrix Grid Lines
+        const hLineCount = 30;
+        const vLineCount = 30;
+
+        for (let i = 0; i < hLineCount; i++) {
+            const hLine = document.createElement('div');
+            hLine.className = 'grid-line-h';
+            hLine.style.top = `${(100 / hLineCount) * i}%`;
+            hLinesContainer.appendChild(hLine);
+        }
+
+        for (let i = 0; i < vLineCount; i++) {
+            const vLine = document.createElement('div');
+            vLine.className = 'grid-line-v';
+            vLine.style.left = `${(100 / vLineCount) * i}%`;
+            vLinesContainer.appendChild(vLine);
+        }
+
+        // Update CTA section visibility and animations
+        function updateCTA() {
+            const progress = virtualProgress; // Use virtual progress
+
+            // Show PROJECTS header during projects timeline (6-70%)
+            if (progress >= 6 && progress < 70) {
+                const headerProgress = (progress - 6) / 5; // Fade in over 5% (6-11%)
+                projectsHeader.style.opacity = Math.min(1, headerProgress);
+            } else {
+                projectsHeader.style.opacity = 0;
+            }
+
+            // Show CTA section at 75%+ (gap after projects end at 70%)
+            if (progress >= 75) {
+                ctaSection.classList.add('active');
+                const ctaProgress = (progress - 75) / 25; // 0 to 1 in the 75-100% range
+                ctaSection.style.opacity = Math.min(1, ctaProgress * 2); // Fade in quickly
+            } else {
+                ctaSection.classList.remove('active');
+                ctaSection.style.opacity = 0;
+            }
+
+            // Matrix grid parallax animation with continuous movement in CTA
+            let scrollForParallax = (progress / 100) * 4000;
+
+            // Add CTA scroll offset for continuous grid movement (smooth lerp animation)
+            scrollForParallax += ctaScrollOffset * 100; // Smooth, fluid movement
+
+            const hOffset = (scrollForParallax * 0.4) % 100;
+            const vOffset = (scrollForParallax * 0.15) % 100;
+            hLinesContainer.style.transform = `translateY(${hOffset}px)`;
+            vLinesContainer.style.transform = `translateX(${vOffset}px)`;
+
+            // Update scroll offset display
+            const paddedScroll = Math.floor(scrollForParallax).toString().padStart(4, '0');
+            scrollDisplay.innerText = `SYNC_OFFSET: [${paddedScroll}]`;
+        }
+
+        // Wrap the original update function to include CTA updates
+        const originalUpdate = update;
+        update = function () {
+            originalUpdate();
+            updateCTA();
+        };
+
+        updateCTA(); // Initial run
+
+        // === HERO BOIDS SECTION ===
+        const COUNT_ACTIVE = 1000;
+        const COUNT_INDEP = 2000;
+        const TOTAL_COUNT = COUNT_ACTIVE + COUNT_INDEP;
+        const BOUNDS = 400;
+        const MAX_SPEED = 2.4;
+        const ATTRACTION_FORCE = 0.28;
+
+        let scene, camera, renderer, activeMesh, indepMesh;
+        const positions = new Float32Array(TOTAL_COUNT * 3);
+        const velocities = new Float32Array(TOTAL_COUNT * 3);
+
+        let isAttracting = false;
+        let attractionPoint = new THREE.Vector3();
+        const raycaster = new THREE.Raycaster();
+        const mouse2 = new THREE.Vector2();
+        const plane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
+        const dummy = new THREE.Object3D();
+        const v1 = new THREE.Vector3(), v2 = new THREE.Vector3(), v3 = new THREE.Vector3();
+
+        function initBoids() {
+            scene = new THREE.Scene();
+            scene.fog = new THREE.FogExp2(0x000000, 0.001);
+
+            camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 3000);
+            camera.position.z = 800;
+
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "high-performance" });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            document.getElementById('hero-canvas').appendChild(renderer.domElement);
+
+            const sharedGeo = new THREE.ConeGeometry(1.2, 5.5, 3);
+            sharedGeo.rotateX(Math.PI / 2);
+            const sharedMat = new THREE.MeshPhongMaterial({
+                color: 0x10b981,
+                emissive: 0x064e3b,
+                shininess: 100,
+                transparent: true,
+                opacity: 0.85
+            });
+
+            activeMesh = new THREE.InstancedMesh(sharedGeo, sharedMat, COUNT_ACTIVE);
+            indepMesh = new THREE.InstancedMesh(sharedGeo, sharedMat, COUNT_INDEP);
+            scene.add(activeMesh, indepMesh);
+
+            scene.add(new THREE.AmbientLight(0x0a220a, 2.5));
+            const pLight = new THREE.PointLight(0x10b981, 2, 1500);
+            pLight.position.set(0, 500, 400);
+            scene.add(pLight);
+
+            for (let i = 0; i < TOTAL_COUNT; i++) {
+                positions[i * 3] = (Math.random() - 0.5) * BOUNDS * 5;
+                positions[i * 3 + 1] = (Math.random() - 0.5) * BOUNDS * 5;
+                positions[i * 3 + 2] = (Math.random() - 0.5) * BOUNDS * 5;
+                velocities[i * 3] = (Math.random() - 0.5) * 5;
+                velocities[i * 3 + 1] = (Math.random() - 0.5) * 5;
+                velocities[i * 3 + 2] = (Math.random() - 0.5) * 5;
+            }
+
+            window.addEventListener('pointerdown', () => {
+                // Only allow attraction in hero section (progress < 6%)
+                if (virtualProgress < 6) {
+                    isAttracting = true;
+                    document.getElementById('core-status').innerText = 'CORE_REVEALED';
+                    document.getElementById('core-status').style.color = '#fff';
+                }
+            });
+            window.addEventListener('pointerup', () => {
+                isAttracting = false;
+                document.getElementById('core-status').innerText = 'IDLE';
+                document.getElementById('core-status').style.color = '#10b981';
+            });
+            window.addEventListener('pointermove', e => {
+                // Only track mouse position in hero section (progress < 6%)
+                if (virtualProgress < 6) {
+                    mouse2.x = (e.clientX / window.innerWidth) * 2 - 1;
+                    mouse2.y = -(e.clientY / window.innerHeight) * 2 + 1;
+                }
+            });
+
+            animateBoids();
+        }
+
+        function animateBoids() {
+            requestAnimationFrame(animateBoids);
+
+            raycaster.setFromCamera(mouse2, camera);
+            raycaster.ray.intersectPlane(plane, attractionPoint);
+
+            for (let i = 0; i < TOTAL_COUNT; i++) {
+                const isActive = i < COUNT_ACTIVE;
+                const accel = v3.set(0, 0, 0);
+
+                // Disable attraction in projects section (6% - 70%)
+                const inProjectsSection = virtualProgress >= 6 && virtualProgress < 70;
+
+                if (isActive && isAttracting && !inProjectsSection) {
+                    const seek = attractionPoint.clone().sub(v2.set(positions[i * 3], positions[i * 3 + 1], positions[i * 3 + 2]));
+                    seek.setLength(MAX_SPEED).sub(v1.set(velocities[i * 3], velocities[i * 3 + 1], velocities[i * 3 + 2]));
+                    accel.add(seek.multiplyScalar(ATTRACTION_FORCE));
+                }
+
+                velocities[i * 3] += accel.x; velocities[i * 3 + 1] += accel.y; velocities[i * 3 + 2] += accel.z;
+                v1.set(velocities[i * 3], velocities[i * 3 + 1], velocities[i * 3 + 2]).clampLength(0, MAX_SPEED);
+                velocities[i * 3] = v1.x; velocities[i * 3 + 1] = v1.y; velocities[i * 3 + 2] = v1.z;
+
+                positions[i * 3] += velocities[i * 3];
+                positions[i * 3 + 1] += velocities[i * 3 + 1];
+                positions[i * 3 + 2] += velocities[i * 3 + 2];
+
+                const l = BOUNDS * 2.8;
+                if (Math.abs(positions[i * 3]) > l) positions[i * 3] *= -0.98;
+                if (Math.abs(positions[i * 3 + 1]) > l) positions[i * 3 + 1] *= -0.98;
+                if (Math.abs(positions[i * 3 + 2]) > l) positions[i * 3 + 2] *= -0.98;
+
+                dummy.position.set(positions[i * 3], positions[i * 3 + 1], positions[i * 3 + 2]);
+                dummy.lookAt(positions[i * 3] + velocities[i * 3], positions[i * 3 + 1] + velocities[i * 3 + 1], positions[i * 3 + 2] + velocities[i * 3 + 2]);
+                dummy.updateMatrix();
+
+                const mesh = isActive ? activeMesh : indepMesh;
+                mesh.setMatrixAt(isActive ? i : i - COUNT_ACTIVE, dummy.matrix);
+            }
+            activeMesh.instanceMatrix.needsUpdate = true;
+            indepMesh.instanceMatrix.needsUpdate = true;
+
+            // Removed scene rotation to fix attraction point drift
+            renderer.render(scene, camera);
+        }
+
+        // Hero fade out logic
+        const heroCanvas = document.getElementById('hero-canvas');
+        const heroUI = document.getElementById('hero-ui');
+        const heroContent = document.getElementById('hero-content');
+        const langSwitcher = document.getElementById('language-switcher');
+        const heroScrollOffset = document.getElementById('hero-scroll-offset');
+
+        const originalUpdateCTA = updateCTA;
+        updateCTA = function () {
+            originalUpdateCTA();
+
+            const progress = virtualProgress; // Use virtual progress
+
+            // --- Lógica Persistente de Boids ---
+            if (progress < 6) {
+                // Transición del Hero al modo "proyectos" (0% a 6%)
+                const fadeFactor = Math.max(0.25, 1 - (progress / 4));
+                heroCanvas.style.opacity = fadeFactor;
+
+                // Reducir población gradualmente (de 3000 a 500)
+                if (activeMesh && indepMesh) {
+                    activeMesh.count = Math.floor(1000 * (fadeFactor));
+                    indepMesh.count = Math.floor(2000 * (fadeFactor));
+                }
+                heroCanvas.style.pointerEvents = 'auto'; // Enable interaction in Hero section
+            } else if (progress < 70) {
+                // Durante Proyectos: Opacidad sutil y solo 500 boids
+                heroCanvas.style.opacity = "0.25";
+                heroCanvas.style.pointerEvents = 'none'; // Don't block project links!
+                if (activeMesh && indepMesh) {
+                    activeMesh.count = 500;
+                    indepMesh.count = 0;
+                }
+            } else {
+                // Desvanecer completamente para el CTA (70% a 75%)
+                const finalFade = Math.max(0, 1 - (progress - 70) / 5);
+                heroCanvas.style.opacity = 0.25 * finalFade;
+                heroCanvas.style.pointerEvents = 'none'; // CRITICAL: Don't block CTA button clicks!
+                if (activeMesh) activeMesh.count = Math.floor(500 * finalFade);
+            }
+
+            // Elementos UI del Hero siempre desaparecen rápido
+            const uiFade = Math.max(0, 1 - (progress / 3));
+            heroUI.style.opacity = uiFade;
+            heroContent.style.opacity = uiFade;
+            if (langSwitcher) langSwitcher.style.opacity = uiFade;
+
+            // CRITICAL: Hide hero content completely after hero section to prevent blocking
+            if (progress > 6) {
+                heroContent.style.display = 'none';
+                heroUI.style.display = 'none';
+                if (langSwitcher) langSwitcher.style.display = 'none';
+            } else {
+                heroContent.style.display = 'flex';
+                heroUI.style.display = 'block';
+                if (langSwitcher) langSwitcher.style.display = 'flex';
+            }
+
+            // Simulate scroll for display
+            const scrollSimulation = (progress / 100) * 4000;
+            heroScrollOffset.innerText = Math.floor(scrollSimulation).toString().padStart(4, '0');
+        };
+
+        // Initialize hero
+        if (typeof THREE !== 'undefined') {
+            initBoids();
+        }
+
+        // Resize handler for hero
+        window.addEventListener('resize', () => {
+            if (camera && renderer) {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            }
+        });
+
+        // --- METHOD MODAL LOGIC ---
+        window.openMethodModal = function () {
+            const modal = document.getElementById('methodModal');
+            modal.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+            setTimeout(() => {
+                modal.classList.add('active');
+            }, 10);
+        };
+
+        window.closeMethodModal = function () {
+            const modal = document.getElementById('methodModal');
+            modal.classList.remove('active');
+            document.body.style.overflow = '';
+            setTimeout(() => {
+                modal.style.display = 'none';
+            }, 400);
+        };
+
+        // --- CONTACT MODAL LOGIC ---
+        window.openContactModal = function () {
+            const modal = document.getElementById('contactModal');
+            modal.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+            setTimeout(() => {
+                modal.classList.add('active');
+            }, 10);
+        };
+
+        window.closeContactModal = function () {
+            const modal = document.getElementById('contactModal');
+            modal.classList.remove('active');
+            document.body.style.overflow = '';
+            setTimeout(() => {
+                modal.style.display = 'none';
+            }, 400);
+        };
+    </script>
+
+    <!-- Modal HTML -->
+    <div id="methodModal" class="modal-overlay" style="display: none;" onclick="closeMethodModal()">
+        <div class="modal-container" onclick="event.stopPropagation()">
+            <div class="scanline"></div>
+
+            <div class="flex justify-between items-start mb-6">
+                <div>
+                    <p class="text-[9px] text-emerald-500 tracking-[0.3em] mb-1">PROTOCOLO // FLUJO_DE_TRABAJO</p>
+                    <h2 class="text-2xl font-bold text-white uppercase italic">¿Cómo trabajamos?</h2>
+                </div>
+                <button onclick="closeMethodModal()"
+                    class="close-btn text-xs tracking-widest text-emerald-500 hover:text-white transition-colors">
+                    [ CERRAR ]
+                </button>
+            </div>
+
+            <div class="timeline">
+                <div class="step-item">
+                    <div class="step-dot"></div>
+                    <div class="step-content">
+                        <div class="flex items-center space-x-2 mb-1">
+                            <span class="text-emerald-500 text-[10px] font-bold">01</span>
+                            <h3 class="text-white font-bold text-base uppercase">Alineación de Concepto</h3>
+                        </div>
+                        <p class="text-gray-400 text-xs leading-relaxed">
+                            Nos sumergimos en tu visión para asegurar que cada estrategia digital esté alineada
+                            perfectamente con tus objetivos de negocio. Sin soluciones genéricas, solo ingeniería a
+                            medida.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="step-item">
+                    <div class="step-dot"></div>
+                    <div class="step-content">
+                        <div class="flex items-center space-x-2 mb-1">
+                            <span class="text-emerald-500 text-[10px] font-bold">02</span>
+                            <h3 class="text-white font-bold text-base uppercase">UX Estratégica</h3>
+                        </div>
+                        <p class="text-gray-400 text-xs leading-relaxed">
+                            Creamos interfaces que no son solo visualmente impactantes, sino que están diseñadas para
+                            convertir visitantes en clientes leales mediante recorridos de usuario fluidos.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="step-item">
+                    <div class="step-dot"></div>
+                    <div class="step-content">
+                        <div class="flex items-center space-x-2 mb-1">
+                            <span class="text-emerald-500 text-[10px] font-bold">03</span>
+                            <h3 class="text-white font-bold text-base uppercase">Excelencia Técnica</h3>
+                        </div>
+                        <p class="text-gray-400 text-xs leading-relaxed">
+                            Ingeniería de alto rendimiento. Construimos arquitecturas ultrarrápidas, seguras y
+                            adaptables que proporcionan una base sólida para el crecimiento de tu marca.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="step-item">
+                    <div class="step-dot"></div>
+                    <div class="step-content">
+                        <div class="flex items-center space-x-2 mb-1">
+                            <span class="text-emerald-500 text-[10px] font-bold">04</span>
+                            <h3 class="text-white font-bold text-base uppercase">Evolución Continua</h3>
+                        </div>
+                        <p class="text-gray-400 text-xs leading-relaxed">
+                            Despliegue de precisión. Monitoreamos y optimizamos tu plataforma después del lanzamiento
+                            para garantizar un rendimiento máximo y estabilidad constante.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Contact Modal -->
+    <div id="contactModal" class="modal-overlay" style="display: none;" onclick="closeContactModal()">
+        <div class="modal-container" onclick="event.stopPropagation()">
+            <div class="scanline"></div>
+
+            <div class="flex justify-between items-start mb-6">
+                <div>
+                    <p class="text-[9px] text-emerald-500 tracking-[0.3em] mb-1">CONTACTO</p>
+                    <h2 class="text-2xl font-bold text-white uppercase italic">Iniciar Proyecto</h2>
+                </div>
+                <button onclick="closeContactModal()"
+                    class="close-btn text-xs tracking-widest text-emerald-500 hover:text-white transition-colors">
+                    [ CERRAR ]
+                </button>
+            </div>
+
+            <form class="contact-form" action="https://formspree.io/f/xdakqnrr" method="POST">
+                <div class="form-group">
+                    <label class="form-label">Nombre</label>
+                    <input type="text" name="name" class="form-input" placeholder="INGRESE SU NOMBRE..." required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Email</label>
+                    <input type="email" name="email" class="form-input" placeholder="INGRESE SU EMAIL..." required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Tipo de Proyecto</label>
+                    <select name="type" class="form-input" required>
+                        <option value="" disabled selected>SELECCIONE TIPO DE PROYECTO...</option>
+                        <option value="landing">Landing Page</option>
+                        <option value="ecommerce">E-Commerce</option>
+                        <option value="webapp">Aplicación Web</option>
+                        <option value="corporate">Sitio Corporativo</option>
+                        <option value="other">Otro / Personalizado</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Mensaje</label>
+                    <textarea name="message" class="form-input" placeholder="DESCRIBA SU VISIÓN..." required></textarea>
+                </div>
+                <button type="submit" class="submit-btn">[ ENVIAR MENSAJE ]</button>
+            </form>
+        </div>
+    </div>
+</body>
+
+</html>
