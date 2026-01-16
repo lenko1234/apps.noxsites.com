@@ -27,12 +27,12 @@
                 const userLang = navigator.language || navigator.userLanguage;
                 if (userLang.startsWith('es')) {
                     localStorage.setItem('preferredLanguage', 'es');
-                    window.location.href = '/es/';
+                    window.location.href = '/portfolio/es/';
                 } else {
                     localStorage.setItem('preferredLanguage', 'en');
                 }
             } else if (preferredLang === 'es' && !window.location.pathname.includes('/es')) {
-                window.location.href = '/es/';
+                window.location.href = '/portfolio/es/';
             }
         })();
     </script>
@@ -906,7 +906,7 @@
     <!-- Language Switcher -->
     <div id="language-switcher">
         <span class="lang-btn active">EN</span>
-        <a href="/es/" class="lang-btn" onclick="localStorage.setItem('preferredLanguage', 'es')">ES</a>
+        <a href="/portfolio/es/" class="lang-btn" onclick="localStorage.setItem('preferredLanguage', 'es')">ES</a>
     </div>
 
     <!-- HERO SECTION -->
