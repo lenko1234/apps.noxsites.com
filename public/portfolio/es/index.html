@@ -16,9 +16,9 @@
     <link rel="apple-touch-icon" href="../favicon.png">
 
     <!-- Hreflang tags for multilingual SEO -->
-    <link rel="alternate" hreflang="es" href="https://noxsites.com/es/" />
-    <link rel="alternate" hreflang="en" href="https://noxsites.com/" />
-    <link rel="alternate" hreflang="x-default" href="https://noxsites.com/" />
+    <link rel="alternate" hreflang="es" href="https://noxsites.com/portfolio/es/" />
+    <link rel="alternate" hreflang="en" href="https://noxsites.com/portfolio/" />
+    <link rel="alternate" hreflang="x-default" href="https://noxsites.com/portfolio/" />
 
     <!-- Auto Language Detection -->
     <script>
@@ -29,12 +29,12 @@
                 const userLang = navigator.language || navigator.userLanguage;
                 if (!userLang.startsWith('es')) {
                     localStorage.setItem('preferredLanguage', 'en');
-                    window.location.href = '/';
+                    window.location.href = '/portfolio/';
                 } else {
                     localStorage.setItem('preferredLanguage', 'es');
                 }
-            } else if (preferredLang === 'en' && window.location.pathname.includes('/es')) {
-                window.location.href = '/';
+            } else if (preferredLang === 'en' && window.location.pathname.includes('/portfolio/es')) {
+                window.location.href = '/portfolio/';
             }
         })();
     </script>
