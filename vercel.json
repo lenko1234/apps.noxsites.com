@@ -2,5 +2,23 @@
     "framework": "vite",
     "buildCommand": "npm run build",
     "outputDirectory": "dist",
-    "cleanUrls": true
+    "cleanUrls": true,
+    "redirects": [
+        {
+            "source": "/es/(.*)",
+            "destination": "/portfolio/es/$1",
+            "permanent": true
+        },
+        {
+            "source": "/es",
+            "destination": "/portfolio/es/",
+            "permanent": true
+        }
+    ],
+    "rewrites": [
+        {
+            "source": "/portfolio/es/(.*)",
+            "destination": "/portfolio/es/index.html"
+        }
+    ]
 }
