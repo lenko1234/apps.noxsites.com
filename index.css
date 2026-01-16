@@ -96,13 +96,27 @@ ul {
 
 .btn-outline {
     background: transparent;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: #fff;
+    border: 1px solid var(--primary);
+    color: var(--primary);
+    position: relative;
+    overflow: hidden;
+}
+
+#boids-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+    pointer-events: none;
+    opacity: 0.6;
 }
 
 .btn-outline:hover {
-    background: rgba(255, 255, 255, 0.05);
-    border-color: var(--primary);
+    background: rgba(16, 185, 129, 0.1);
+    color: #fff;
+    box-shadow: 0 0 20px rgba(16, 185, 129, 0.2);
 }
 
 /* Navbar */
