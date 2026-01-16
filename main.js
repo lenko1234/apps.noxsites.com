@@ -117,6 +117,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         let bounds = getBounds();
+        let isHovered = false;
+
+        boidsBtn.addEventListener('mouseenter', () => isHovered = true);
+        boidsBtn.addEventListener('mouseleave', () => isHovered = false);
 
         for (let i = 0; i < count; i++) {
             positions.push(new THREE.Vector3(
@@ -134,11 +138,17 @@ document.addEventListener('DOMContentLoaded', () => {
         function animate() {
             requestAnimationFrame(animate);
 
+            // Speed factor based on hover
+            const speedFactor = isHovered ? 2.5 : 1.0;
+
             for (let i = 0; i < count; i++) {
                 const pos = positions[i];
                 const vel = velocities[i];
 
-                pos.add(vel);
+                // Apply velocity with speed factor
+                pos.x += vel.x * speedFactor;
+                pos.y += vel.y * speedFactor;
+                pos.z += vel.z * speedFactor;
 
                 // Boundary Wrap (Teleport to other side for continuous flow)
                 if (pos.x > bounds.x) pos.x = -bounds.x;
