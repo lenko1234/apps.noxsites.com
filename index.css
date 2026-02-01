@@ -12,6 +12,46 @@
     --font-heading: 'Outfit', sans-serif;
     --font-body: 'Inter', sans-serif;
     --transition-smooth: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-bounce: all 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+@keyframes fade-down {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fade-up {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.reveal-item {
+    opacity: 0;
+}
+
+.visible.reveal-item,
+.visible .reveal-item {
+    animation: fade-down 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* Scroll direction variants */
+.scroll-up.visible.reveal-item,
+.scroll-up.visible .reveal-item {
+    animation: fade-up 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
 * {
@@ -32,6 +72,10 @@ body {
     line-height: 1.6;
     overflow-x: hidden;
     -webkit-font-smoothing: antialiased;
+    /* Performance optimizations */
+    will-change: scroll-position;
+    transform: translateZ(0);
+    backface-visibility: hidden;
 }
 
 h1,
@@ -67,6 +111,25 @@ ul {
 .fade-in.visible {
     opacity: 1;
     transform: translateY(0);
+}
+
+.nexus-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+    pointer-events: none;
+    opacity: 0.8;
+    /* GPU acceleration */
+    transform: translateZ(0);
+    will-change: transform;
+}
+
+.container {
+    position: relative;
+    z-index: 2;
 }
 
 /* Components */
@@ -242,13 +305,29 @@ nav .container {
 .hero-badge {
     background: rgba(16, 185, 129, 0.1);
     color: var(--primary);
-    padding: 0.5rem 1.2rem;
+    padding: 0.6rem 1.4rem;
     border-radius: 99px;
     font-size: 0.85rem;
     font-weight: 600;
-    margin-bottom: 1.5rem;
+    margin-bottom: 2rem;
     display: inline-block;
     border: 1px solid rgba(16, 185, 129, 0.2);
+    box-shadow: 0 0 20px rgba(16, 185, 129, 0.1);
+    animation: pulse-glow 3s infinite alternate;
+}
+
+@keyframes pulse-glow {
+    from {
+        box-shadow: 0 0 15px rgba(16, 185, 129, 0.1);
+        border-color: rgba(16, 185, 129, 0.2);
+        transform: scale(1);
+    }
+
+    to {
+        box-shadow: 0 0 25px rgba(16, 185, 129, 0.3);
+        border-color: rgba(16, 185, 129, 0.4);
+        transform: scale(1.02);
+    }
 }
 
 .hero h1 {
@@ -341,16 +420,73 @@ nav .container {
 
 .logos-wrapper {
     display: flex;
-    justify-content: space-around;
+    justify-content: center;
     align-items: center;
     flex-wrap: wrap;
-    gap: 3rem;
-    opacity: 0.5;
+    gap: 4rem;
+    opacity: 0.8;
+}
+
+.brand-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 160px;
+    transition: var(--transition-smooth);
+}
+
+.logo-container {
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 0.5rem;
+}
+
+.brand-logo {
+    height: 45px;
+    width: auto;
+    max-width: 140px;
+    object-fit: contain;
+    filter: grayscale(100%) brightness(0.8);
+    transition: all 0.3s ease;
+}
+
+.brand-panzo {
+    height: 70px;
+    /* Panzo logo Enlarged */
+    max-width: 160px;
+}
+
+.brand-name {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    letter-spacing: 0.05em;
+    opacity: 0.7;
+    transition: all 0.3s ease;
+}
+
+.brand-item:hover .brand-logo {
+    filter: grayscale(0%) brightness(1);
+    transform: translateY(-5px);
+}
+
+.brand-item:hover .brand-name {
+    color: var(--primary);
+    opacity: 1;
+}
+
+.brand-item:hover .brand-name {
+    color: var(--primary);
+    opacity: 1;
 }
 
 /* Problem vs Solution */
 .comparison {
     padding: 8rem 0;
+    position: relative;
+    overflow: hidden;
 }
 
 .section-header {
@@ -405,6 +541,31 @@ nav .container {
     display: flex;
     gap: 0.75rem;
     font-size: 0.95rem;
+    opacity: 0;
+}
+
+.comp-card.visible ul li {
+    animation: fade-down 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.comp-card.scroll-up.visible ul li {
+    animation: fade-up 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.comp-card.visible ul li:nth-child(1) {
+    animation-delay: 0.1s;
+}
+
+.comp-card.visible ul li:nth-child(2) {
+    animation-delay: 0.3s;
+}
+
+.comp-card.visible ul li:nth-child(3) {
+    animation-delay: 0.5s;
+}
+
+.comp-card.visible ul li:nth-child(4) {
+    animation-delay: 0.7s;
 }
 
 /* Features Grid */
@@ -442,18 +603,28 @@ nav .container {
     justify-content: center;
     margin-bottom: 1.5rem;
     color: var(--primary);
+    transition: var(--transition-bounce);
+}
+
+.feature-card:hover .feature-icon {
+    transform: scale(1.2) rotate(10deg);
+    background: var(--primary);
+    color: #000;
 }
 
 /* Pricing */
 .pricing {
-    padding: 8rem 0;
+    padding: 8rem 0 12rem 0;
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(to bottom, var(--bg-dark) 0%, var(--bg-dark) 80%, #0a0a0a 100%);
 }
 
 .pricing-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: 2rem;
-    max-width: 900px;
+    max-width: 1100px;
     margin: 0 auto;
 }
 
@@ -465,6 +636,13 @@ nav .container {
     display: flex;
     flex-direction: column;
     position: relative;
+    transition: var(--transition-bounce);
+}
+
+.price-card:hover {
+    transform: translateY(-15px) scale(1.02);
+    border-color: rgba(16, 185, 129, 0.3);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), 0 0 20px rgba(16, 185, 129, 0.1);
 }
 
 .price-card.featured {
@@ -483,6 +661,18 @@ nav .container {
     font-size: 0.7rem;
     font-weight: 700;
     border-radius: 4px;
+}
+
+.price-value,
+.price-maint,
+.price-features li {
+    min-height: 1.2em;
+    /* Prevent layout jump */
+}
+
+.pricing-grid .type-text,
+.price-features li {
+    opacity: 1;
 }
 
 .price-header h3 {
@@ -520,6 +710,44 @@ nav .container {
     font-size: 0.95rem;
     display: flex;
     gap: 0.75rem;
+    opacity: 0;
+}
+
+.price-card.visible .price-features li {
+    animation: fade-down 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.price-card.scroll-up.visible .price-features li {
+    animation: fade-up 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* Staggered delays */
+.price-card.visible .price-features li:nth-child(1) {
+    animation-delay: 0.1s;
+}
+
+.price-card.visible .price-features li:nth-child(2) {
+    animation-delay: 0.3s;
+}
+
+.price-card.visible .price-features li:nth-child(3) {
+    animation-delay: 0.5s;
+}
+
+.price-card.visible .price-features li:nth-child(4) {
+    animation-delay: 0.7s;
+}
+
+/* Keep list items visible after animation */
+.price-card.visible .price-features li {
+    opacity: 1 !important;
+}
+
+/* Final CTA */
+.final-cta {
+    position: relative;
+    overflow: hidden;
+    margin-top: -8rem;
 }
 
 /* Footer */

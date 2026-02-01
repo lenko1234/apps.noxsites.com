@@ -42,10 +42,11 @@
     <main>
         <!-- Hero Section -->
         <section class="hero">
+            <canvas class="nexus-canvas"></canvas>
             <div class="container">
                 <div class="hero-content fade-in">
                     <span class="hero-badge">Expertos en Conversión Digital</span>
-                    <h1>Sistemas de Catálogo de <span style="color: var(--primary);">alto impacto</span></h1>
+                    <h1>Sistemas de Catálogo de <span id="typewriter-text" style="color: var(--primary);"></span></h1>
                     <p>Potenciamos agencias y negocios con herramientas digitales de estética premium diseñadas para
                         vender más y automatizar procesos.</p>
                     <div class="hero-ctas">
@@ -77,12 +78,36 @@
                     style="text-align: center; margin-bottom: 2rem; color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.1em;">
                     Marcas que confían en nuestra tecnología</p>
                 <div class="logos-wrapper">
-                    <!-- Placeholder logos using simple text for visual weight -->
-                    <span style="font-weight: 700; font-size: 1.5rem;">STELLAR</span>
-                    <span style="font-weight: 700; font-size: 1.5rem;">VORTEX</span>
-                    <span style="font-weight: 700; font-size: 1.5rem;">LUMINA</span>
-                    <span style="font-weight: 700; font-size: 1.5rem;">APEX</span>
-                    <span style="font-weight: 700; font-size: 1.5rem;">GLYPH</span>
+                    <div class="brand-item">
+                        <div class="logo-container">
+                            <img src="public/marcas/calo-tattoo.png" alt="Calo Tattoo" class="brand-logo">
+                        </div>
+                        <span class="brand-name">Calo Tattoo</span>
+                    </div>
+                    <div class="brand-item">
+                        <div class="logo-container">
+                            <img src="public/marcas/electro-aguirre.png" alt="Electro Aguirre" class="brand-logo">
+                        </div>
+                        <span class="brand-name">Electro Aguirre</span>
+                    </div>
+                    <div class="brand-item">
+                        <div class="logo-container">
+                            <img src="public/marcas/esquina-jardin.png" alt="Esquina Jardín" class="brand-logo">
+                        </div>
+                        <span class="brand-name">Esquina Jardín</span>
+                    </div>
+                    <div class="brand-item">
+                        <div class="logo-container">
+                            <img src="public/marcas/matilde-joyas.png" alt="Matilde Joyas" class="brand-logo">
+                        </div>
+                        <span class="brand-name">Matilde Joyas</span>
+                    </div>
+                    <div class="brand-item">
+                        <div class="logo-container">
+                            <img src="public/marcas/panzo.png" alt="Panzo" class="brand-logo brand-panzo">
+                        </div>
+                        <span class="brand-name">Panzo</span>
+                    </div>
                 </div>
             </div>
         </section>
@@ -102,13 +127,17 @@
                         <p style="color: var(--text-muted); margin-bottom: 2rem;">Vender por WhatsApp o redes sin un
                             sistema profesional es caótico.</p>
                         <ul>
-                            <li><i data-lucide="x-circle" style="color: #ff453a;"></i> PDFs pesados que nadie descarga.
+                            <li><i data-lucide="x-circle" style="color: #ff453a;"></i> PDFs pesados
+                                que nadie descarga.
                             </li>
-                            <li><i data-lucide="x-circle" style="color: #ff453a;"></i> Consultas repetitivas de stock y
+                            <li><i data-lucide="x-circle" style="color: #ff453a;"></i> Consultas
+                                repetitivas de stock y
                                 precios.</li>
-                            <li><i data-lucide="x-circle" style="color: #ff453a;"></i> Imagen de marca poco profesional.
+                            <li><i data-lucide="x-circle" style="color: #ff453a;"></i> Imagen de marca
+                                poco profesional.
                             </li>
-                            <li><i data-lucide="x-circle" style="color: #ff453a;"></i> Cero estadísticas de qué miran
+                            <li><i data-lucide="x-circle" style="color: #ff453a;"></i> Cero
+                                estadísticas de qué miran
                                 tus clientes.</li>
                         </ul>
                     </div>
@@ -118,13 +147,17 @@
                         <p style="color: var(--text-muted); margin-bottom: 2rem;">Automatizamos tu catálogo para que
                             solo te preocupes por despachar.</p>
                         <ul>
-                            <li><i data-lucide="check-circle" style="color: var(--primary);"></i> Catálogo web ultra
+                            <li><i data-lucide="check-circle" style="color: var(--primary);"></i>
+                                Catálogo web ultra
                                 veloz y responsive.</li>
-                            <li><i data-lucide="check-circle" style="color: var(--primary);"></i> Carrito directo al
+                            <li><i data-lucide="check-circle" style="color: var(--primary);"></i>
+                                Carrito directo al
                                 WhatsApp del vendedor.</li>
-                            <li><i data-lucide="check-circle" style="color: var(--primary);"></i> Diseño premium que
+                            <li><i data-lucide="check-circle" style="color: var(--primary);"></i>
+                                Diseño premium que
                                 genera confianza.</li>
-                            <li><i data-lucide="check-circle" style="color: var(--primary);"></i> Dashboard de métricas
+                            <li><i data-lucide="check-circle" style="color: var(--primary);"></i>
+                                Dashboard de métricas
                                 en tiempo real.</li>
                         </ul>
                     </div>
@@ -170,6 +203,7 @@
 
         <!-- Pricing Section -->
         <section class="pricing" id="precios">
+            <canvas class="nexus-canvas"></canvas>
             <div class="container">
                 <div class="section-header fade-in">
                     <h2>Planes para <span style="color: var(--primary);">Escalar</span></h2>
@@ -178,7 +212,7 @@
 
                 <div class="pricing-grid">
                     <!-- Plan 1 -->
-                    <div class="price-card fade-in">
+                    <div class="price-card">
                         <div class="price-header">
                             <h3>Landing Pages</h3>
                             <p>Para campañas de impacto único.</p>
@@ -198,7 +232,7 @@
                     </div>
 
                     <!-- Plan 2 -->
-                    <div class="price-card featured fade-in" style="animation-delay: 0.2s;">
+                    <div class="price-card featured" style="animation-delay: 0.2s;">
                         <div class="price-header">
                             <h3>Sistemas de Catálogo</h3>
                             <p>Ecosystem completo de ventas.</p>
@@ -214,15 +248,35 @@
                             <li><i data-lucide="check" style="color: var(--primary);"></i> Reporte de Métricas Mensual
                             </li>
                         </ul>
-                        <a href="#" class="btn btn-primary">Elegir Catálogo</a>
+                        <a href="https://wa.me/5493442653918" class="btn btn-primary">Elegir Catálogo</a>
+                    </div>
+
+                    <!-- Plan 3 -->
+                    <div class="price-card" style="animation-delay: 0.3s;">
+                        <div class="price-header">
+                            <h3>Desarrollo de Apps</h3>
+                            <p>Soluciones móviles nativas.</p>
+                        </div>
+                        <div class="price-value" style="font-size: 2rem; margin: 1.5rem 0;">
+                            A medida
+                        </div>
+                        <p class="price-maint">Presupuesto según alcance</p>
+                        <ul class="price-features">
+                            <li><i data-lucide="check" style="color: var(--primary);"></i> iOS & Android (Nativo)</li>
+                            <li><i data-lucide="check" style="color: var(--primary);"></i> UI/UX de Alto Nivel</li>
+                            <li><i data-lucide="check" style="color: var(--primary);"></i> Notificaciones Push</li>
+                            <li><i data-lucide="check" style="color: var(--primary);"></i> Integraciones Backend</li>
+                        </ul>
+                        <a href="https://wa.me/5493442653918" class="btn btn-outline">Pedir Presupuesto</a>
                     </div>
                 </div>
             </div>
         </section>
 
         <!-- CTA Final -->
-        <section
-            style="padding: 6rem 0; background: linear-gradient(to bottom, var(--bg-dark), var(--primary-dark)); text-align: center;">
+        <section class="final-cta"
+            style="padding: 6rem 0; background: linear-gradient(to bottom, #0a0a0a 0%, var(--bg-dark) 20%, var(--primary-dark) 100%); text-align: center;">
+            <canvas class="nexus-canvas"></canvas>
             <div class="container">
                 <h2 style="font-size: 3rem; margin-bottom: 1.5rem;">¿Listo para el siguiente paso?</h2>
                 <p style="margin-bottom: 3rem; opacity: 0.8; max-width: 600px; margin-left: auto; margin-right: auto;">
@@ -261,18 +315,41 @@
                     </div>
                 </div>
             </div>
+
+            <!-- CTA to Particles Experience -->
             <div
-                style="border-top: 1px solid rgba(255, 255, 255, 0.05); padding-top: 2rem; display: flex; justify-content: space-between; align-items: center; color: var(--text-muted); font-size: 0.85rem;">
-                <p>&copy; 2024 NOX Digital Agency. Buenos Aires, Argentina.</p>
-                <p>Designed with <i data-lucide="heart" style="width: 14px; color: var(--primary);"></i> by NOX</p>
+                style="border-top: 1px solid rgba(255, 255, 255, 0.05); border-bottom: 1px solid rgba(255, 255, 255, 0.05); padding: 3rem 0; margin: 2rem 0; text-align: center;">
+                <h3 style="font-size: 1.5rem; margin-bottom: 1rem; color: var(--primary);">Experimentá Nuestra Visión
+                </h3>
+                <p
+                    style="color: var(--text-muted); margin-bottom: 2rem; max-width: 500px; margin-left: auto; margin-right: auto;">
+                    Descubrí cómo transformamos conceptos en experiencias visuales inmersivas
+                </p>
+                <a href="/particulas.html" class="btn btn-primary"
+                    style="display: inline-flex; align-items: center; gap: 0.5rem;">
+                    <span>Ver Experiencia</span>
+                    <i data-lucide="arrow-right" style="width: 18px; height: 18px;"></i>
+                </a>
+            </div>
+
+            <div
+                style="padding-top: 2rem; display: flex; justify-content: space-between; align-items: center; color: var(--text-muted); font-size: 0.85rem;">
+                <p>&copy; 2025 NoxSites. Argentina.</p>
+                <p>Web by Nox</p>
             </div>
         </div>
     </footer>
 
     <script type="module" src="/main.js"></script>
+    <script src="/nexus.js"></script>
     <script>
         // Initialize Lucide Icons
         lucide.createIcons();
+
+        // Initialize Nexus Backgrounds
+        window.addEventListener('load', () => {
+            initNexus('.nexus-canvas');
+        });
 
         // Navbar scroll effect
         window.addEventListener('scroll', () => {

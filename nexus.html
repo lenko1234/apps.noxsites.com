@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NOX Premium Background</title>
+    <style>
+        body,
+        html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #020202;
+            /* Negro más profundo */
+        }
+
+        #canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="canvas-container">
+        <canvas id="noxCanvas"></canvas>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('noxCanvas');
+        const ctx = canvas.getContext('2d');
+        let particlesArray = [];
+        let glowsArray = [];
+
+        // Colores NOX
+        const EMERALD_RGB = '16, 185, 129';
+        const DARK_EMERALD = '4, 120, 87';
+
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            init();
+        }
+
+        window.addEventListener('resize', resize);
+
+        // Clase para los brillos ambientales de fondo
+        class Glow {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.size = Math.random() * 300 + 200;
+                this.dx = (Math.random() - 0.5) * 0.2;
+                this.dy = (Math.random() - 0.5) * 0.2;
+                this.opacity = Math.random() * 0.1 + 0.05;
+            }
+
+            draw() {
+                const gradient = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.size);
+                gradient.addColorStop(0, `rgba(${EMERALD_RGB}, ${this.opacity})`);
+                gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            update() {
+                this.x += this.dx;
+                this.y += this.dy;
+
+                if (this.x < -this.size) this.x = canvas.width + this.size;
+                if (this.x > canvas.width + this.size) this.x = -this.size;
+                if (this.y < -this.size) this.y = canvas.height + this.size;
+                if (this.y > canvas.height + this.size) this.y = -this.size;
+
+                this.draw();
+            }
+        }
+
+        // Clase para las partículas de la red
+        class Particle {
+            constructor(x, y, dx, dy, size) {
+                this.x = x;
+                this.y = y;
+                this.dx = dx;
+                this.dy = dy;
+                this.size = size;
+            }
+
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(${EMERALD_RGB}, 0.6)`;
+                ctx.fill();
+            }
+
+            update() {
+                // Rebotar sutilmente
+                if (this.x > canvas.width || this.x < 0) this.dx = -this.dx;
+                if (this.y > canvas.height || this.y < 0) this.dy = -this.dy;
+
+                this.x += this.dx;
+                this.y += this.dy;
+
+                this.draw();
+            }
+        }
+
+        function init() {
+            particlesArray = [];
+            glowsArray = [];
+
+            // Crear brillos de fondo (3 a 5 luces grandes)
+            for (let i = 0; i < 5; i++) {
+                glowsArray.push(new Glow());
+            }
+
+            // Crear red de partículas
+            let quantity = (canvas.width * canvas.height) / 10000;
+            for (let i = 0; i < quantity; i++) {
+                let size = Math.random() * 1.5 + 0.5;
+                let x = Math.random() * canvas.width;
+                let y = Math.random() * canvas.height;
+                // Velocidad muy lenta para mayor fluidez
+                let dx = (Math.random() - 0.5) * 0.4;
+                let dy = (Math.random() - 0.5) * 0.4;
+                particlesArray.push(new Particle(x, y, dx, dy, size));
+            }
+        }
+
+        function connect() {
+            let maxDistance = 180;
+            for (let a = 0; a < particlesArray.length; a++) {
+                for (let b = a; b < particlesArray.length; b++) {
+                    let dx = particlesArray[a].x - particlesArray[b].x;
+                    let dy = particlesArray[a].y - particlesArray[b].y;
+                    let distance = Math.sqrt(dx * dx + dy * dy);
+
+                    if (distance < maxDistance) {
+                        let opacity = 1 - (distance / maxDistance);
+                        ctx.strokeStyle = `rgba(${DARK_EMERALD}, ${opacity * 0.25})`;
+                        ctx.lineWidth = 0.8;
+                        ctx.beginPath();
+                        ctx.moveTo(particlesArray[a].x, particlesArray[a].y);
+                        ctx.lineTo(particlesArray[b].x, particlesArray[b].y);
+                        ctx.stroke();
+                    }
+                }
+            }
+        }
+
+        function animate() {
+            // Limpiar con un ligero rastro para suavidad (opcional, aquí es limpio)
+            ctx.fillStyle = '#020202';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // 1. Dibujar Brillos de Fondo
+            glowsArray.forEach(glow => glow.update());
+
+            // 2. Dibujar Conexiones
+            connect();
+
+            // 3. Dibujar Partículas
+            particlesArray.forEach(particle => particle.update());
+
+            requestAnimationFrame(animate);
+        }
+
+        resize();
+        animate();
+    </script>
+</body>
+
+</html>

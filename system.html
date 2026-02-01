@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System NOX | Panel de Gestión SaaS</title>
+    <meta name="description" content="Panel de control para gestión de suscripciones mensuales y clientes NOX">
+
+    <link rel="stylesheet" href="/index.css">
+    <link rel="stylesheet" href="/system.css">
+    <link rel="canonical" href="https://system.noxsites.com/" />
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Chart.js para gráficos -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+
+<body class="system-body">
+    <!-- Navbar -->
+    <nav id="navbar" class="system-nav">
+        <div class="container">
+            <a href="/" class="logo">
+                <i data-lucide="zap"></i>
+                <span>NOX System</span>
+            </a>
+            <div class="nav-user">
+                <span class="user-name">Roberto & Socio</span>
+                <div class="user-avatar">RS</div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="system-main">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <nav class="sidebar-nav">
+                <a href="#dashboard" class="nav-item active" data-section="dashboard">
+                    <i data-lucide="layout-dashboard"></i>
+                    <span>Dashboard MRR</span>
+                </a>
+                <a href="#suscripciones" class="nav-item" data-section="suscripciones">
+                    <i data-lucide="users"></i>
+                    <span>Suscripciones</span>
+                </a>
+                <a href="#onboarding" class="nav-item" data-section="onboarding">
+                    <i data-lucide="rocket"></i>
+                    <span>Onboarding</span>
+                </a>
+                <a href="#portal" class="nav-item" data-section="portal">
+                    <i data-lucide="link"></i>
+                    <span>Portal Cliente</span>
+                </a>
+                <a href="#gastos" class="nav-item" data-section="gastos">
+                    <i data-lucide="calculator"></i>
+                    <span>Gastos</span>
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Content Area -->
+        <div class="content-area">
+            <!-- Dashboard MRR Section -->
+            <section id="dashboard" class="section active">
+                <div class="section-header">
+                    <h1>Dashboard de Ingresos Recurrentes</h1>
+                    <p class="subtitle">Métricas en tiempo real del modelo SaaS</p>
+                </div>
+
+                <!-- MRR Cards -->
+                <div class="stats-grid">
+                    <div class="stat-card primary">
+                        <div class="stat-icon">
+                            <i data-lucide="trending-up"></i>
+                        </div>
+                        <div class="stat-content">
+                            <span class="stat-label">MRR Total</span>
+                            <span class="stat-value" id="mrr-total">$0</span>
+                            <span class="stat-change positive">+12% vs mes anterior</span>
+                        </div>
+                    </div>
+
+                    <div class="stat-card success">
+                        <div class="stat-icon">
+                            <i data-lucide="user-check"></i>
+                        </div>
+                        <div class="stat-content">
+                            <span class="stat-label">Tu Parte (50%)</span>
+                            <span class="stat-value" id="tu-parte">$0</span>
+                            <span class="stat-change">División equitativa</span>
+                        </div>
+                    </div>
+
+                    <div class="stat-card info">
+                        <div class="stat-icon">
+                            <i data-lucide="users"></i>
+                        </div>
+                        <div class="stat-content">
+                            <span class="stat-label">Parte Socio (50%)</span>
+                            <span class="stat-value" id="parte-socio">$0</span>
+                            <span class="stat-change">División equitativa</span>
+                        </div>
+                    </div>
+
+                    <div class="stat-card warning">
+                        <div class="stat-icon">
+                            <i data-lucide="users"></i>
+                        </div>
+                        <div class="stat-content">
+                            <span class="stat-label">Clientes Activos</span>
+                            <span class="stat-value" id="clientes-activos">0</span>
+                            <span class="stat-change">Suscripciones vigentes</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- MRR Chart -->
+                <div class="chart-container">
+                    <h3>Evolución MRR (Últimos 6 meses)</h3>
+                    <canvas id="mrrChart"></canvas>
+                </div>
+
+                <!-- Próximos Cobros -->
+                <div class="upcoming-payments">
+                    <div class="section-header">
+                        <h3>Próximos Cobros (7 días)</h3>
+                        <button class="btn btn-sm btn-primary" onclick="refreshPayments()">
+                            <i data-lucide="refresh-cw"></i>
+                            Actualizar
+                        </button>
+                    </div>
+                    <div class="payments-list" id="payments-list">
+                        <!-- Se llena dinámicamente -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- Suscripciones Section -->
+            <section id="suscripciones" class="section">
+                <div class="section-header">
+                    <h1>Gestión de Suscripciones Activas</h1>
+                    <button class="btn btn-primary" onclick="addNewSubscription()">
+                        <i data-lucide="plus"></i>
+                        Nueva Suscripción
+                    </button>
+                </div>
+
+                <!-- Filtros -->
+                <div class="filters">
+                    <input type="text" class="search-input" placeholder="Buscar cliente..." id="search-client">
+                    <select class="filter-select" id="filter-status">
+                        <option value="all">Todos los estados</option>
+                        <option value="active">Activos</option>
+                        <option value="suspended">Suspendidos</option>
+                        <option value="pending">Pago Pendiente</option>
+                    </select>
+                </div>
+
+                <!-- Tabla de Suscripciones -->
+                <div class="subscriptions-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Cliente</th>
+                                <th>Plan</th>
+                                <th>Estado</th>
+                                <th>Próximo Cobro</th>
+                                <th>Monto Mensual</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="subscriptions-tbody">
+                            <!-- Se llena dinámicamente -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Onboarding Section -->
+            <section id="onboarding" class="section">
+                <div class="section-header">
+                    <h1>Sistema de Onboarding Veloz</h1>
+                    <p class="subtitle">Fábrica de sitios: de la firma al online en 24hs</p>
+                </div>
+
+                <!-- Nuevo Cliente Form -->
+                <div class="onboarding-form">
+                    <h3>Nuevo Cliente</h3>
+                    <form id="new-client-form">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Nombre del Negocio</label>
+                                <input type="text" name="business_name" required
+                                    placeholder="Ej: La Focacceria de Lola">
+                            </div>
+                            <div class="form-group">
+                                <label>Nombre del Cliente</label>
+                                <input type="text" name="client_name" required placeholder="Ej: Juan Pérez">
+                            </div>
+                            <div class="form-group">
+                                <label>WhatsApp</label>
+                                <input type="tel" name="whatsapp" required placeholder="5493442XXXXXX">
+                            </div>
+                            <div class="form-group">
+                                <label>Email</label>
+                                <input type="email" name="email" required placeholder="cliente@ejemplo.com">
+                            </div>
+                            <div class="form-group">
+                                <label>Dominio Deseado</label>
+                                <input type="text" name="domain" required placeholder="ejemplo.com.ar">
+                            </div>
+                            <div class="form-group">
+                                <label>Plan Mensual</label>
+                                <select name="plan" required>
+                                    <option value="">Seleccionar plan...</option>
+                                    <option value="catalogo-basico">Catálogo Básico - $25k/mes</option>
+                                    <option value="catalogo-pro">Catálogo Pro - $35k/mes</option>
+                                    <option value="landing-premium">Landing Premium - $20k/mes</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <h4 style="margin-top: 2rem;">Checklist de Lanzamiento</h4>
+                        <div class="checklist">
+                            <label class="checkbox-item">
+                                <input type="checkbox" name="check_domain">
+                                <span>1. Datos de dominio configurados</span>
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" name="check_branding">
+                                <span>2. Logo y colores (verde esmeralda NOX)</span>
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" name="check_photos">
+                                <span>3. Fotos del local/productos subidas</span>
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" name="check_content">
+                                <span>4. Contenido y textos aprobados</span>
+                            </label>
+                        </div>
+
+                        <!-- Upload desde móvil -->
+                        <div class="mobile-upload">
+                            <h4>Subida rápida desde móvil</h4>
+                            <p class="help-text">Tu socio puede subir fotos directamente desde el local del cliente</p>
+                            <div class="upload-area" id="upload-area">
+                                <i data-lucide="upload-cloud"></i>
+                                <p>Arrastrá fotos aquí o hacé click para seleccionar</p>
+                                <input type="file" id="file-input" multiple accept="image/*" capture="environment">
+                            </div>
+                            <div class="uploaded-files" id="uploaded-files"></div>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="button" class="btn btn-outline" onclick="resetForm()">Cancelar</button>
+                            <button type="submit" class="btn btn-primary">
+                                <i data-lucide="rocket"></i>
+                                Crear Cliente y Publicar
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </section>
+
+            <!-- Portal Cliente Section -->
+            <section id="portal" class="section">
+                <div class="section-header">
+                    <h1>Portal del Cliente</h1>
+                    <p class="subtitle">Genera links de pago recurrente profesionales</p>
+                </div>
+
+                <!-- Generador de Suscripción -->
+                <div class="subscription-generator">
+                    <h3>Generador de Link de Pago Recurrente</h3>
+                    <form id="payment-link-form">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Cliente</label>
+                                <select name="client" required id="client-select">
+                                    <option value="">Seleccionar cliente...</option>
+                                    <!-- Se llena dinámicamente -->
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Plan</label>
+                                <select name="plan" required>
+                                    <option value="catalogo-basico">Catálogo Básico - $25k/mes</option>
+                                    <option value="catalogo-pro">Catálogo Pro - $35k/mes</option>
+                                    <option value="landing-premium">Landing Premium - $20k/mes</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Método de Pago</label>
+                                <select name="payment_method" required>
+                                    <option value="mercadopago">Mercado Pago (Débito Automático)</option>
+                                    <option value="stripe">Stripe</option>
+                                    <option value="manual">Transferencia Manual</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">
+                            <i data-lucide="qr-code"></i>
+                            Generar QR de Suscripción
+                        </button>
+                    </form>
+
+                    <!-- QR Code Display -->
+                    <div class="qr-display" id="qr-display" style="display: none;">
+                        <div class="qr-card">
+                            <h4>QR de Suscripción Generado</h4>
+                            <div class="qr-code" id="qr-code">
+                                <!-- QR se genera aquí -->
+                            </div>
+                            <p class="qr-instructions">
+                                El cliente debe escanear este QR para adherir su tarjeta al débito automático
+                            </p>
+                            <div class="qr-actions">
+                                <button class="btn btn-outline" onclick="downloadQR()">
+                                    <i data-lucide="download"></i>
+                                    Descargar QR
+                                </button>
+                                <button class="btn btn-primary" onclick="shareWhatsApp()">
+                                    <i data-lucide="share-2"></i>
+                                    Compartir por WhatsApp
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Gastos Section -->
+            <section id="gastos" class="section">
+                <div class="section-header">
+                    <h1>Control de Gastos Compartidos</h1>
+                    <p class="subtitle">Transparencia total en costos operativos</p>
+                </div>
+
+                <!-- Resumen Financiero -->
+                <div class="financial-summary">
+                    <div class="summary-card">
+                        <h3>Resumen del Mes</h3>
+                        <div class="summary-row">
+                            <span>Ingresos Totales (MRR)</span>
+                            <span class="amount positive" id="summary-income">$0</span>
+                        </div>
+                        <div class="summary-row">
+                            <span>Gastos Operativos</span>
+                            <span class="amount negative" id="summary-expenses">$0</span>
+                        </div>
+                        <div class="summary-divider"></div>
+                        <div class="summary-row total">
+                            <span>Neto a Distribuir</span>
+                            <span class="amount" id="summary-net">$0</span>
+                        </div>
+                        <div class="summary-row split">
+                            <span>Tu Parte (50%)</span>
+                            <span class="amount success" id="summary-your-share">$0</span>
+                        </div>
+                        <div class="summary-row split">
+                            <span>Parte Socio (50%)</span>
+                            <span class="amount info" id="summary-partner-share">$0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Gastos Operativos -->
+                <div class="expenses-section">
+                    <div class="section-header">
+                        <h3>Gastos Operativos Mensuales</h3>
+                        <button class="btn btn-primary" onclick="addExpense()">
+                            <i data-lucide="plus"></i>
+                            Agregar Gasto
+                        </button>
+                    </div>
+
+                    <div class="expenses-list">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Concepto</th>
+                                    <th>Categoría</th>
+                                    <th>Monto</th>
+                                    <th>Fecha</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="expenses-tbody">
+                                <!-- Gastos por defecto -->
+                                <tr>
+                                    <td>Hosting Vercel Pro</td>
+                                    <td><span class="badge badge-tech">Infraestructura</span></td>
+                                    <td>$20 USD</td>
+                                    <td>Mensual</td>
+                                    <td>
+                                        <button class="btn-icon" onclick="editExpense(this)">
+                                            <i data-lucide="edit-2"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Dominios .com.ar (x10)</td>
+                                    <td><span class="badge badge-tech">Dominios</span></td>
+                                    <td>$15k ARS</td>
+                                    <td>Anual</td>
+                                    <td>
+                                        <button class="btn-icon" onclick="editExpense(this)">
+                                            <i data-lucide="edit-2"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Firebase (Analytics + Hosting)</td>
+                                    <td><span class="badge badge-tech">Infraestructura</span></td>
+                                    <td>$10 USD</td>
+                                    <td>Mensual</td>
+                                    <td>
+                                        <button class="btn-icon" onclick="editExpense(this)">
+                                            <i data-lucide="edit-2"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Modal para editar suscripción -->
+    <div class="modal" id="subscription-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Gestionar Suscripción</h3>
+                <button class="modal-close" onclick="closeModal()">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <div class="modal-body" id="modal-body">
+                <!-- Contenido dinámico -->
+            </div>
+        </div>
+    </div>
+
+    <script src="/system.js"></script>
+    <script>
+        // Initialize Lucide Icons
+        lucide.createIcons();
+    </script>
+</body>
+
+</html>
