@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NOX | High-Impact Catalog Systems and Landing Pages</title>
+    <meta name="description"
+        content="We transform your business with digital catalog systems and landing pages designed to convert. Premium aesthetics, speed, and results.">
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="NOX | Catalog Systems and Landing Pages">
+    <meta property="og:description" content="Sell more with high-impact digital catalogs.">
+    <meta property="og:image" content="/nox_catalog.png">
+
+    <link rel="stylesheet" href="/index.css">
+    <link rel="canonical" href="https://noxsites.com/en/" />
+    <link rel="alternate" hreflang="es" href="https://noxsites.com/" />
+    <link rel="alternate" hreflang="en" href="https://noxsites.com/en/" />
+    <link rel="alternate" hreflang="x-default" href="https://noxsites.com/" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        localStorage.setItem('preferredLanguage', 'en');
+    </script>
+</head>
+
+<body>
+    <nav id="navbar">
+        <div class="container">
+            <a href="#" class="logo">
+                <i data-lucide="zap"></i>
+                <span>NOX</span>
+            </a>
+            <ul class="nav-links">
+                <li><a href="#servicios">Services</a></li>
+                <li><a href="/portfolio/">Portfolio</a></li>
+                <li><a href="#precios">Pricing</a></li>
+                <li><a href="https://wa.me/5493442653918?text=Hi%20NOX!%20I'm%20contacting%20you%20from%20the%20website%20to%20make%20an%20inquiry." class="btn btn-outline"
+                        style="padding: 0.5rem 1.2rem; font-size: 0.9rem;">Contact</a></li>
+                <li class="lang-switch-item">
+                    <a href="/" style="color: var(--text-muted); font-size: 0.85rem; transition: var(--transition-smooth);" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='var(--text-muted)'" onclick="localStorage.setItem('preferredLanguage', 'es')">ES</a>
+                    <span style="color: rgba(255, 255, 255, 0.3); font-size: 0.85rem;">|</span>
+                    <span style="color: var(--primary); font-weight: 600; font-size: 0.85rem;">EN</span>
+                </li>
+            </ul>
+            <button class="mobile-menu-btn" style="display: none;">
+                <i data-lucide="menu"></i>
+            </button>
+        </div>
+    </nav>
+
+    <main>
+        <!-- Hero Section -->
+        <section class="hero">
+            <canvas class="nexus-canvas"></canvas>
+            <div class="container">
+                <div class="hero-content fade-in">
+                    <span class="hero-badge">Digital Conversion Experts</span>
+                    <h1>Catalog Systems for<br><span id="typewriter-text" style="color: var(--primary);" data-phrases='["high impact", "premium aesthetics", "real conversion", "pure design"]'></span></h1>
+                    <p>We power agencies and businesses with premium-design digital tools engineered to increase sales and automate processes.</p>
+                    <div class="hero-ctas">
+                        <a href="#precios" class="btn btn-primary">View Solutions</a>
+                        <a href="/portfolio/" class="btn btn-outline" id="portfolio-btn">
+                            <canvas id="boids-canvas"></canvas>
+                            <span style="position: relative; z-index: 2;">View our Portfolio</span>
+                        </a>
+                    </div>
+                </div>
+
+                <div class="hero-visual fade-in" style="animation-delay: 0.2s;">
+                    <div class="phone-mockup">
+                        <img src="/nox_catalog.png" alt="Nox Catalog Mockup"
+                             style="width: 100%; height: 100%; object-fit: cover;">
+                    </div>
+                    <div class="phone-mockup secondary">
+                        <img src="/nox_catalog.png" alt="Nox Catalog Mockup Secondary"
+                             style="width: 100%; height: 100%; object-fit: cover;">
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Social Proof -->
+        <section class="logos-section">
+            <div class="container text-center">
+                <p
+                    style="text-align: center; margin-bottom: 2rem; color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.1em;">
+                    Brands that trust our technology</p>
+                <div class="logos-wrapper">
+                    <div class="brand-item">
+                        <div class="logo-container">
+                            <img src="../public/marcas/calo-tattoo.png" alt="Calo Tattoo" class="brand-logo">
+                        </div>
+                        <span class="brand-name">Calo Tattoo</span>
+                    </div>
+                    <div class="brand-item">
+                        <div class="logo-container">
+                            <img src="../public/marcas/electro-aguirre.png" alt="Electro Aguirre" class="brand-logo">
+                        </div>
+                        <span class="brand-name">Electro Aguirre</span>
+                    </div>
+                    <div class="brand-item">
+                        <div class="logo-container">
+                            <img src="../public/marcas/esquina-jardin.png" alt="Esquina Jardín" class="brand-logo">
+                        </div>
+                        <span class="brand-name">Esquina Jardín</span>
+                    </div>
+                    <div class="brand-item">
+                        <div class="logo-container">
+                            <img src="../public/marcas/matilde-joyas.png" alt="Matilde Joyas" class="brand-logo">
+                        </div>
+                        <span class="brand-name">Matilde Joyas</span>
+                    </div>
+                    <div class="brand-item">
+                        <div class="logo-container">
+                            <img src="../public/marcas/panzo.png" alt="Panzo" class="brand-logo brand-panzo">
+                        </div>
+                        <span class="brand-name">Panzo</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Problem vs Solution -->
+        <section class="comparison" id="proceso">
+            <div class="container">
+                <div class="section-header fade-in">
+                    <h2>Why does your business need a <span style="color: var(--primary);">NOX System</span>?</h2>
+                    <p style="color: var(--text-muted);">Stop losing sales to manual processes and outdated aesthetics.</p>
+                </div>
+
+                <div class="comparison-grid">
+                    <div class="comp-card problem fade-in">
+                        <h3><i data-lucide="frown" style="color: #ff453a;"></i> The Problem</h3>
+                        <p style="color: var(--text-muted); margin-bottom: 2rem;">Selling via WhatsApp or social media without a professional system is chaotic.</p>
+                        <ul>
+                            <li><i data-lucide="x-circle" style="color: #ff453a;"></i> Heavy PDFs that nobody downloads.</li>
+                            <li><i data-lucide="x-circle" style="color: #ff453a;"></i> Repetitive stock and price inquiries.</li>
+                            <li><i data-lucide="x-circle" style="color: #ff453a;"></i> Unprofessional brand image.</li>
+                            <li><i data-lucide="x-circle" style="color: #ff453a;"></i> Zero metrics on what your clients are looking at.</li>
+                        </ul>
+                    </div>
+
+                    <div class="comp-card solution fade-in" style="animation-delay: 0.2s;">
+                        <h3><i data-lucide="smile" style="color: var(--primary);"></i> The NOX Solution</h3>
+                        <p style="color: var(--text-muted); margin-bottom: 2rem;">We automate your catalog so you only worry about shipping.</p>
+                        <ul>
+                            <li><i data-lucide="check-circle" style="color: var(--primary);"></i> Ultra-fast and responsive web catalog.</li>
+                            <li><i data-lucide="check-circle" style="color: var(--primary);"></i> Shopping cart directly to the seller's WhatsApp.</li>
+                            <li><i data-lucide="check-circle" style="color: var(--primary);"></i> Premium design that builds trust.</li>
+                            <li><i data-lucide="check-circle" style="color: var(--primary);"></i> Real-time metrics dashboard.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Features Grid -->
+        <section class="features" id="servicios">
+            <div class="container">
+                <div class="section-header fade-in">
+                    <h2>Next-Level <span style="color: var(--primary);">Features</span></h2>
+                </div>
+
+                <div class="features-grid">
+                    <div class="feature-card fade-in">
+                        <div class="feature-icon"><i data-lucide="smartphone"></i></div>
+                        <h4>Mobile First</h4>
+                        <p style="color: var(--text-muted);">Designed for the palm of your hand. Fluid experience on any device.</p>
+                    </div>
+                    <div class="feature-card fade-in" style="animation-delay: 0.1s;">
+                        <div class="feature-icon"><i data-lucide="search"></i></div>
+                        <h4>SEO Optimized</h4>
+                        <p style="color: var(--text-muted);">Show up on Google when your customers search for your products.</p>
+                    </div>
+                    <div class="feature-card fade-in" style="animation-delay: 0.2s;">
+                        <div class="feature-icon"><i data-lucide="bar-chart-3"></i></div>
+                        <h4>Analytics</h4>
+                        <p style="color: var(--text-muted);">Measure every click. Know exactly which products are most wanted.</p>
+                    </div>
+                    <div class="feature-card fade-in" style="animation-delay: 0.3s;">
+                        <div class="feature-icon"><i data-lucide="globe"></i></div>
+                        <h4>Custom Domain</h4>
+                        <p style="color: var(--text-muted);">Custom domain included for a solid and professional brand identity.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Pricing Section -->
+        <section class="pricing" id="precios">
+            <canvas class="nexus-canvas"></canvas>
+            <div class="container">
+                <div class="section-header fade-in">
+                    <h2>Plans to <span style="color: var(--primary);">Scale</span></h2>
+                    <p style="color: var(--text-muted);">Transparent investment for extraordinary results.</p>
+                </div>
+
+                <div class="pricing-grid">
+                    <!-- Plan 1 -->
+                    <div class="price-card">
+                        <div class="price-header">
+                            <h3>Landing Pages</h3>
+                            <p>For single-impact campaigns.</p>
+                        </div>
+                        <div class="price-value">
+                            <span class="price-currency">$</span>150k
+                        </div>
+                        <p class="price-maint">+ $10k/mo maintenance</p>
+                        <ul class="price-features">
+                            <li><i data-lucide="check" style="color: var(--primary);"></i> Custom Design</li>
+                            <li><i data-lucide="check" style="color: var(--primary);"></i> Conversion Copywriting</li>
+                            <li><i data-lucide="check" style="color: var(--primary);"></i> WhatsApp Integration</li>
+                            <li><i data-lucide="check" style="color: var(--primary);"></i> SSL Included</li>
+                        </ul>
+                        <a href="https://wa.me/5493442653918?text=Hi%20NOX!%20I'm%20interested%20in%20the%20Landing%20Pages%20plan%20for%20my%20business." class="btn btn-outline">Choose Landing</a>
+                    </div>
+
+                    <!-- Plan 2 -->
+                    <div class="price-card featured" style="animation-delay: 0.2s;">
+                        <div class="price-header">
+                            <h3>Catalog Systems</h3>
+                            <p>Complete sales ecosystem.</p>
+                        </div>
+                        <div class="price-value">
+                            <span class="price-currency">$</span>250k
+                        </div>
+                        <p class="price-maint">+ $10k/mo maintenance</p>
+                        <ul class="price-features">
+                            <li><i data-lucide="check" style="color: var(--primary);"></i> Multi-Category Catalog</li>
+                            <li><i data-lucide="check" style="color: var(--primary);"></i> Admin Dashboard</li>
+                            <li><i data-lucide="check" style="color: var(--primary);"></i> Shopping Cart</li>
+                            <li><i data-lucide="check" style="color: var(--primary);"></i> Monthly Metrics Report</li>
+                        </ul>
+                        <a href="https://wa.me/5493442653918?text=Hi%20NOX!%20I'm%20interested%20in%20the%20Catalog%20Systems%20plan%20for%20my%20business." class="btn btn-primary">Choose Catalog</a>
+                    </div>
+
+                    <!-- Plan 3 -->
+                    <div class="price-card" style="animation-delay: 0.3s;">
+                        <div class="price-header">
+                            <h3>App Development</h3>
+                            <p>Native mobile solutions.</p>
+                        </div>
+                        <div class="price-value" style="font-size: 2rem; margin: 1.5rem 0;">
+                            Custom
+                        </div>
+                        <p class="price-maint">Budget based on scope</p>
+                        <ul class="price-features">
+                            <li><i data-lucide="check" style="color: var(--primary);"></i> iOS & Android (Native)</li>
+                            <li><i data-lucide="check" style="color: var(--primary);"></i> High-Level UI/UX</li>
+                            <li><i data-lucide="check" style="color: var(--primary);"></i> Push Notifications</li>
+                            <li><i data-lucide="check" style="color: var(--primary);"></i> Backend Integrations</li>
+                        </ul>
+                        <a href="https://wa.me/5493442653918?text=Hi%20NOX!%20I'm%20interested%20in%20Custom%20App%20Development%20and%20would%20like%20to%20request%20a%20quote." class="btn btn-outline">Request a Quote</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Final CTA -->
+        <section class="final-cta"
+            style="padding: 6rem 0; background: linear-gradient(to bottom, #0a0a0a 0%, var(--bg-dark) 20%, var(--primary-dark) 100%); text-align: center;">
+            <canvas class="nexus-canvas"></canvas>
+            <div class="container">
+                <h2 style="font-size: 3rem; margin-bottom: 1.5rem;">Ready for the next step?</h2>
+                <p style="margin-bottom: 3rem; opacity: 0.8; max-width: 600px; margin-left: auto; margin-right: auto;">
+                    Join the businesses already transforming the way they sell with NOX.</p>
+                <a href="https://wa.me/5493442653918?text=Hi%20NOX!%20I%20would%20like%20to%20start%20a%20project%20with%20you%20and%20chat%20about%20it." class="btn btn-primary"
+                    style="padding: 1rem 3rem; font-size: 1.2rem;">Let's talk on WhatsApp</a>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-brand">
+                    <a href="#" class="logo" style="margin-bottom: 1rem;">
+                        <i data-lucide="zap"></i>
+                        <span>NOX</span>
+                    </a>
+                    <p style="color: var(--text-muted); max-width: 300px;">Developing the future of digital sales.</p>
+                </div>
+                <div class="footer-links" style="display: flex; gap: 4rem;">
+                    <div>
+                        <h5 style="margin-bottom: 1.5rem;">Legal</h5>
+                        <ul style="color: var(--text-muted); display: flex; flex-direction: column; gap: 0.5rem;">
+                            <li><a href="#" style="transition: var(--transition-smooth);" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='var(--text-muted)'">Terms</a></li>
+                            <li><a href="#" style="transition: var(--transition-smooth);" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='var(--text-muted)'">Privacy</a></li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h5 style="margin-bottom: 1.5rem;">Social</h5>
+                        <div class="social-links">
+                            <a href="https://www.instagram.com/noxsites/" class="social-link" target="_blank"
+                                rel="noopener noreferrer"><i data-lucide="instagram"></i></a>
+                            <a href="#" class="social-link"><i data-lucide="linkedin"></i></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CTA to Particles Experience -->
+            <div
+                style="border-top: 1px solid rgba(255, 255, 255, 0.05); border-bottom: 1px solid rgba(255, 255, 255, 0.05); padding: 3rem 0; margin: 2rem 0; text-align: center;">
+                <h3 style="font-size: 1.5rem; margin-bottom: 1rem; color: var(--primary);">Experience Our Vision</h3>
+                <p
+                    style="color: var(--text-muted); margin-bottom: 2rem; max-width: 500px; margin-left: auto; margin-right: auto;">
+                    Discover how we transform concepts into immersive visual experiences
+                </p>
+                <a href="/particulas.html" class="btn btn-primary"
+                    style="display: inline-flex; align-items: center; gap: 0.5rem;">
+                    <span>View Experience</span>
+                    <i data-lucide="arrow-right" style="width: 18px; height: 18px;"></i>
+                </a>
+            </div>
+
+            <div
+                style="padding-top: 2rem; display: flex; justify-content: space-between; align-items: center; color: var(--text-muted); font-size: 0.85rem;">
+                <p>&copy; 2025 NoxSites. Argentina.</p>
+                <p>Web by Nox</p>
+            </div>
+        </div>
+    </footer>
+
+    <script type="module" src="/main.js"></script>
+    <script type="module" src="/nexus.js"></script>
+    <script>
+        // Initialize Lucide Icons
+        lucide.createIcons();
+
+        // Initialize Nexus Backgrounds
+        window.addEventListener('load', () => {
+            initNexus('.nexus-canvas');
+        });
+
+        // Navbar scroll effect
+        window.addEventListener('scroll', () => {
+            const nav = document.getElementById('navbar');
+            if (window.scrollY > 50) {
+                nav.classList.add('scrolled');
+            } else {
+                nav.classList.remove('scrolled');
+            }
+        });
+    </script>
+</body>
+
+</html>

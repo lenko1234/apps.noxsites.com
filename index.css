@@ -273,6 +273,20 @@ nav .container {
     }
 }
 
+.lang-switch-item {
+    display: inline-flex;
+    gap: 0.4rem;
+    align-items: center;
+}
+
+@media (min-width: 1024px) {
+    .lang-switch-item {
+        border-left: 1px solid rgba(255, 255, 255, 0.15);
+        padding-left: 1rem;
+        margin-left: 0.5rem;
+    }
+}
+
 /* Hero Section */
 .hero {
     padding: 8rem 0 4rem;

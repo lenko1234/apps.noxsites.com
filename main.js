@@ -66,7 +66,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const heroTypewriterEl = document.getElementById('typewriter-text');
     if (heroTypewriterEl) {
-        new Typewriter(heroTypewriterEl, ['alto impacto', 'estética premium', 'conversión real', 'puro diseño'], 2500);
+        let phrases = ['alto impacto', 'estética premium', 'conversión real', 'puro diseño'];
+        const rawPhrases = heroTypewriterEl.getAttribute('data-phrases');
+        if (rawPhrases) {
+            try {
+                phrases = JSON.parse(rawPhrases);
+            } catch (e) {
+                console.error("Error parsing typewriter phrases:", e);
+            }
+        }
+        new Typewriter(heroTypewriterEl, phrases, 2500);
     }
 
     // Reversible animations for comparison cards and other fade-in elements

@@ -17,6 +17,14 @@
     ],
     "rewrites": [
         {
+            "source": "/barberias",
+            "destination": "https://barberias-chi.vercel.app/barberias"
+        },
+        {
+            "source": "/barberias/:path*",
+            "destination": "https://barberias-chi.vercel.app/barberias/:path*"
+        },
+        {
             "source": "/portfolio/es/(.*)",
             "destination": "/portfolio/es/index.html"
         }

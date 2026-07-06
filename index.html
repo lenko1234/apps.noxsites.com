@@ -15,8 +15,14 @@
 
     <link rel="stylesheet" href="/index.css">
     <link rel="canonical" href="https://noxsites.com/" />
+    <link rel="alternate" hreflang="es" href="https://noxsites.com/" />
+    <link rel="alternate" hreflang="en" href="https://noxsites.com/en/" />
+    <link rel="alternate" hreflang="x-default" href="https://noxsites.com/" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        localStorage.setItem('preferredLanguage', 'es');
+    </script>
 </head>
 
 <body>
@@ -28,10 +34,19 @@
             </a>
             <ul class="nav-links">
                 <li><a href="#servicios">Servicios</a></li>
-                <li><a href="/portfolio/">Portfolio</a></li>
+                <li><a href="/portfolio/es/">Portfolio</a></li>
                 <li><a href="#precios">Precios</a></li>
-                <li><a href="https://wa.me/5493442653918" class="btn btn-outline"
-                        style="padding: 0.5rem 1.2rem; font-size: 0.9rem;">Contacto</a></li>
+                <li><a href="https://wa.me/5493442653918?text=Hola%20NOX!%20Me%20contacto%20desde%20la%20web%20para%20hacer%20una%20consulta."
+                        class="btn btn-outline" style="padding: 0.5rem 1.2rem; font-size: 0.9rem;">Contacto</a></li>
+                <li class="lang-switch-item">
+                    <span style="color: var(--primary); font-weight: 600; font-size: 0.85rem;">ES</span>
+                    <span style="color: rgba(255, 255, 255, 0.3); font-size: 0.85rem;">|</span>
+                    <a href="/en/"
+                        style="color: var(--text-muted); font-size: 0.85rem; transition: var(--transition-smooth);"
+                        onmouseover="this.style.color='var(--primary)'"
+                        onmouseout="this.style.color='var(--text-muted)'"
+                        onclick="localStorage.setItem('preferredLanguage', 'en')">EN</a>
+                </li>
             </ul>
             <button class="mobile-menu-btn" style="display: none;">
                 <i data-lucide="menu"></i>
@@ -46,12 +61,14 @@
             <div class="container">
                 <div class="hero-content fade-in">
                     <span class="hero-badge">Expertos en Conversión Digital</span>
-                    <h1>Sistemas de Catálogo de <span id="typewriter-text" style="color: var(--primary);"></span></h1>
+                    <h1>Sistemas de Catálogo de<br><span id="typewriter-text" style="color: var(--primary);"
+                            data-phrases='["alto impacto", "estética premium", "conversión real", "puro diseño"]'></span>
+                    </h1>
                     <p>Potenciamos agencias y negocios con herramientas digitales de estética premium diseñadas para
                         vender más y automatizar procesos.</p>
                     <div class="hero-ctas">
                         <a href="#precios" class="btn btn-primary">Ver Soluciones</a>
-                        <a href="/portfolio/" class="btn btn-outline" id="portfolio-btn">
+                        <a href="/portfolio/es/" class="btn btn-outline" id="portfolio-btn">
                             <canvas id="boids-canvas"></canvas>
                             <span style="position: relative; z-index: 2;">Ver nuestro Portfolio</span>
                         </a>
@@ -228,7 +245,8 @@
                             <li><i data-lucide="check" style="color: var(--primary);"></i> Integración de WhatsApp</li>
                             <li><i data-lucide="check" style="color: var(--primary);"></i> SSL Incluido</li>
                         </ul>
-                        <a href="#" class="btn btn-outline">Elegir Landing</a>
+                        <a href="https://wa.me/5493442653918?text=Hola%20NOX!%20Me%20interesa%20el%20plan%20de%20Landing%20Pages%20para%20mi%20negocio."
+                            class="btn btn-outline">Elegir Landing</a>
                     </div>
 
                     <!-- Plan 2 -->
@@ -248,7 +266,8 @@
                             <li><i data-lucide="check" style="color: var(--primary);"></i> Reporte de Métricas Mensual
                             </li>
                         </ul>
-                        <a href="https://wa.me/5493442653918" class="btn btn-primary">Elegir Catálogo</a>
+                        <a href="https://wa.me/5493442653918?text=Hola%20NOX!%20Me%20interesa%20el%20plan%20de%20Sistemas%20de%20Cat%C3%A1logo%20para%20mi%20negocio."
+                            class="btn btn-primary">Elegir Catálogo</a>
                     </div>
 
                     <!-- Plan 3 -->
@@ -267,7 +286,8 @@
                             <li><i data-lucide="check" style="color: var(--primary);"></i> Notificaciones Push</li>
                             <li><i data-lucide="check" style="color: var(--primary);"></i> Integraciones Backend</li>
                         </ul>
-                        <a href="https://wa.me/5493442653918" class="btn btn-outline">Pedir Presupuesto</a>
+                        <a href="https://wa.me/5493442653918?text=Hola%20NOX!%20Me%20interesa%20el%20desarrollo%20de%20una%20App%20a%20medida%20y%20me%20gustar%C3%ADa%20pedir%20un%20presupuesto."
+                            class="btn btn-outline">Pedir Presupuesto</a>
                     </div>
                 </div>
             </div>
@@ -281,8 +301,8 @@
                 <h2 style="font-size: 3rem; margin-bottom: 1.5rem;">¿Listo para el siguiente paso?</h2>
                 <p style="margin-bottom: 3rem; opacity: 0.8; max-width: 600px; margin-left: auto; margin-right: auto;">
                     Unite a las empresas que ya están transformando su manera de vender con NOX.</p>
-                <a href="https://wa.me/5493442653918" class="btn btn-primary"
-                    style="padding: 1rem 3rem; font-size: 1.2rem;">Hablemos por WhatsApp</a>
+                <a href="https://wa.me/5493442653918?text=Hola%20NOX!%20Quiero%20comenzar%20un%20proyecto%20con%20ustedes%20y%20me%20gustar%C3%ADa%20que%20hablemos."
+                    class="btn btn-primary" style="padding: 1rem 3rem; font-size: 1.2rem;">Hablemos por WhatsApp</a>
             </div>
         </section>
     </main>
@@ -335,7 +355,7 @@
 
             <div
                 style="padding-top: 2rem; display: flex; justify-content: space-between; align-items: center; color: var(--text-muted); font-size: 0.85rem;">
-                <p>&copy; 2025 NoxSites. Argentina.</p>
+                <p>&copy; 2026 NoxSites. Argentina.</p>
                 <p>Web by Nox</p>
             </div>
         </div>

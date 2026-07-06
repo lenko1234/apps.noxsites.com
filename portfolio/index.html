@@ -1,24 +1,22 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nox Sites | Diseño Web Premium & Experiencias Digitales</title>
+    <title>Nox Sites | Premium Web Design & Digital Experiences</title>
     <meta name="description"
-        content="Portfolio de diseño web profesional. Landing pages, plataformas e-commerce, aplicaciones web y sitios corporativos con tecnología de vanguardia y animaciones impactantes.">
+        content="Professional web design portfolio. Landing pages, e-commerce platforms, web apps, and corporate sites built with cutting-edge technology and stunning animations.">
     <meta name="keywords"
-        content="diseño web, portfolio, landing pages, e-commerce, desarrollo web, experiencias digitales">
-    <meta name="theme-color" content="#000000">
-    <meta name="color-scheme" content="dark">
+        content="web design, portfolio, landing pages, e-commerce, web development, digital experiences">
 
-    <link rel="icon" type="image/png" href="../favicon.png">
-    <link rel="apple-touch-icon" href="../favicon.png">
-    <link rel="canonical" href="https://noxsites.com/portfolio/es/" />
+    <link rel="icon" type="image/png" href="favicon.png">
+    <link rel="apple-touch-icon" href="favicon.png">
+    <link rel="canonical" href="https://noxsites.com/portfolio/" />
 
     <!-- Hreflang tags for multilingual SEO -->
-    <link rel="alternate" hreflang="es" href="https://noxsites.com/portfolio/es/" />
     <link rel="alternate" hreflang="en" href="https://noxsites.com/portfolio/" />
+    <link rel="alternate" hreflang="es" href="https://noxsites.com/portfolio/es/" />
     <link rel="alternate" hreflang="x-default" href="https://noxsites.com/portfolio/" />
 
     <!-- Auto Language Detection -->
@@ -28,14 +26,14 @@
 
             if (!preferredLang) {
                 const userLang = navigator.language || navigator.userLanguage;
-                if (!userLang.startsWith('es')) {
-                    localStorage.setItem('preferredLanguage', 'en');
-                    window.location.href = '/portfolio/';
-                } else {
+                if (userLang.startsWith('es')) {
                     localStorage.setItem('preferredLanguage', 'es');
+                    window.location.href = '/portfolio/es/';
+                } else {
+                    localStorage.setItem('preferredLanguage', 'en');
                 }
-            } else if (preferredLang === 'en' && window.location.pathname.includes('/portfolio/es')) {
-                window.location.href = '/portfolio/';
+            } else if (preferredLang === 'es' && !window.location.pathname.includes('/portfolio/es')) {
+                window.location.href = '/portfolio/es/';
             }
         })();
     </script>
@@ -45,8 +43,6 @@
     <link
         href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;500&family=Plus+Jakarta+Sans:wght@800&display=swap"
         rel="stylesheet">
-
-
     <style>
         :root {
             --emerald: #10b981;
@@ -196,8 +192,7 @@
             pointer-events: none;
             display: none;
             will-change: opacity, transform, letter-spacing, filter;
-            max-width: 95vw;
-            /* Aumentado para textos en español */
+            max-width: 80vw;
             z-index: 100;
             /* Siempre por encima de las imágenes */
         }
@@ -210,8 +205,6 @@
             line-height: 0.85;
             color: #fff;
             text-align: center;
-            word-wrap: break-word;
-            overflow-wrap: break-word;
         }
 
         .data-label {
@@ -700,123 +693,6 @@
             }
         }
 
-        /* Utility classes to replace Tailwind */
-        .flex {
-            display: flex;
-        }
-
-        .justify-between {
-            justify-content: space-between;
-        }
-
-        .justify-center {
-            justify-content: center;
-        }
-
-        .items-start {
-            align-items: flex-start;
-        }
-
-        .items-center {
-            align-items: center;
-        }
-
-        .space-x-2>*+* {
-            margin-left: 0.5rem;
-        }
-
-        .mb-1 {
-            margin-bottom: 0.25rem;
-        }
-
-        .mb-6 {
-            margin-bottom: 1.5rem;
-        }
-
-        .text-xs {
-            font-size: 0.75rem;
-            line-height: 1rem;
-        }
-
-        .text-base {
-            font-size: 1rem;
-            line-height: 1.5rem;
-        }
-
-        .text-2xl {
-            font-size: 1.5rem;
-            line-height: 2rem;
-        }
-
-        .text-\[9px\] {
-            font-size: 9px;
-        }
-
-        .text-\[10px\] {
-            font-size: 10px;
-        }
-
-        .text-emerald-500 {
-            color: var(--emerald);
-        }
-
-        .text-white {
-            color: #fff;
-        }
-
-        .text-gray-400 {
-            color: #9ca3af;
-        }
-
-        .font-bold {
-            font-weight: 700;
-        }
-
-        .uppercase {
-            text-transform: uppercase;
-        }
-
-        .italic {
-            font-style: italic;
-        }
-
-        .tracking-widest {
-            letter-spacing: 0.1em;
-        }
-
-        .tracking-\[0\.3em\] {
-            letter-spacing: 0.3em;
-        }
-
-        .leading-relaxed {
-            line-height: 1.625;
-        }
-
-        .transition-colors {
-            transition-property: color;
-            transition-duration: 0.3s;
-        }
-
-        .hover\:text-white:hover {
-            color: #fff;
-        }
-
-        .hidden {
-            display: none;
-        }
-
-        @media (max-width: 767px) {
-            .hidden-mobile {
-                display: none;
-            }
-        }
-
-        @media (min-width: 768px) {
-            .md\:block {
-                display: block;
-            }
-        }
-
         /* Language Switcher */
         #language-switcher {
             position: fixed;
@@ -1030,8 +906,8 @@
 
     <!-- Language Switcher -->
     <div id="language-switcher">
-        <a href="/portfolio/" class="lang-btn" onclick="localStorage.setItem('preferredLanguage', 'en')">EN</a>
-        <span class="lang-btn active">ES</span>
+        <span class="lang-btn active">EN</span>
+        <a href="/portfolio/es/" class="lang-btn" onclick="localStorage.setItem('preferredLanguage', 'es')">ES</a>
     </div>
 
     <!-- HERO SECTION -->
@@ -1039,7 +915,7 @@
 
     <div id="hero-ui">
         <h1 class="hero-title" style="font-weight: bold; color: var(--emerald);">
-            DISEÑOS WEB PREMIUM</h1>
+            PREMIUM WEB DESIGNS</h1>
         <div
             style="font-size: 11px; opacity: 0.7; margin-top: 0.5rem; line-height: 1.6; font-family: 'JetBrains Mono', monospace;">
             POPULATION: 3000 UNITS<br>
@@ -1058,7 +934,7 @@
                 &gt; WEBS BY<br>NOX
             </h2>
             <p style="font-size: 11px; letter-spacing: 0.3em; opacity: 0.6; font-family: 'JetBrains Mono', monospace;">
-                DESPLÁZATE PARA EXPLORAR PROYECTOS</p>
+                SCROLL TO EXPLORE PROJECTS</p>
         </div>
     </div>
 
@@ -1067,7 +943,7 @@
         <div class="scroll-arrow"></div>
     </div>
 
-    <div class="system-marker">DISEÑO_WEB: EXPERIENCIAS_PREMIUM // ESTADO: DISPONIBLE</div>
+    <div class="system-marker">WEB_DESIGN: PREMIUM_EXPERIENCES // STATUS: AVAILABLE</div>
 
     <div class="viewport">
         <div class="vignette"></div>
@@ -1083,7 +959,7 @@
 
         <!-- PROJECTS Section Header -->
         <div class="section-header" id="projects-header">
-            // SECCIÓN: PROYECTOS
+            // SECTION: PROJECTS
         </div>
 
         <!-- CTA SECTION -->
@@ -1103,15 +979,14 @@
                 <div
                     style="display: flex; align-items: center; justify-content: center; gap: 0.75rem; margin-bottom: 1.5rem;">
                     <div class="glow-dot"></div>
-                    <p>ESTADO: <span
-                            style="color: var(--emerald-bright); font-weight: bold;">DISPONIBLE_PARA_PROYECTOS</span>
-                    </p>
+                    <p>STATUS: <span
+                            style="color: var(--emerald-bright); font-weight: bold;">AVAILABLE_FOR_PROJECTS</span></p>
                 </div>
                 <div
                     style="display: flex; flex-wrap: wrap; justify-content: center; gap: 2rem; color: rgba(16, 185, 129, 0.5); font-weight: bold;">
-                    <span>// TIEMPO_RESPUESTA: &lt;24H</span>
-                    <span class="hidden-mobile">// ZONA_HORARIA: GMT-3</span>
-                    <span class="hidden-mobile">// SISTEMA: ESTABLE</span>
+                    <span>// RESPONSE_TIME: &lt;24H</span>
+                    <span>// TIMEZONE: GMT-3</span>
+                    <span>// RUNTIME: STABLE</span>
                 </div>
             </div>
 
@@ -1125,11 +1000,11 @@
                 <h1
                     style="position: relative; font-size: clamp(2rem, 7vw, 5rem); font-weight: 900; letter-spacing: -0.05em; line-height: 1; user-select: none; font-family: 'Plus Jakarta Sans', sans-serif;">
                     <!-- Shine Layer -->
-                    <span class="shine-overlay" aria-hidden="true">> ¿LISTO PARA COMENZAR TU PROYECTO?</span>
+                    <span class="shine-overlay" aria-hidden="true">> READY TO START YOUR PROJECT?</span>
 
                     <!-- Main Flickering Text -->
                     <span class="bulb-text">
-                        > ¿LISTO PARA COMENZAR<br style="display: block;">TU PROYECTO?
+                        > READY TO START<br style="display: block;">YOUR PROJECT?
                     </span>
 
                     <!-- Moving Scanline -->
@@ -1141,10 +1016,10 @@
             <div
                 style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 2rem; width: 100%; max-width: 50rem; padding: 0 1.5rem; pointer-events: auto;">
                 <button class="terminal-btn" onclick="openMethodModal()">
-                    [NUESTRO_METODO]
+                    [OUR_METHOD]
                 </button>
                 <button class="terminal-btn" onclick="openContactModal()">
-                    [INICIAR_CONTACTO]
+                    [INITIATE_CONTACT]
                 </button>
             </div>
 
@@ -1153,7 +1028,7 @@
                 style="position: absolute; bottom: 2.5rem; width: 100%; display: flex; justify-content: space-between; padding: 0 3rem; font-size: 9px; opacity: 0.4; text-transform: uppercase; letter-spacing: 0.4em; font-weight: bold; font-family: 'JetBrains Mono', monospace;">
                 <div>SYS_OS: MATRIX_CORE_v4</div>
                 <div id="scroll-display">SYNC_OFFSET: [0000]</div>
-                <div class="hidden md:block">OPS: DISPONIBLE_MUNDIALMENTE</div>
+                <div class="hidden md:block">OPS: AVAILABLE_FOR_WORLDWIDE</div>
             </div>
         </div>
     </div>
@@ -1174,11 +1049,11 @@
          * url: optional project link
          */
         const nodes = [
-            { id: 1, pos: [50, 25], text: "LANDING\nPAGES", label: "CONVERSIÓN_MÁXIMA", life: [6, 18], behavior: 1, image: "../assets/EsquinaJardin.png", url: "https://viveroesquinajardin.com.ar/" },
-            { id: 2, pos: [75, 45], text: "PLATAFORMAS\nE-COMMERCE", label: "VENTAS_24/7", life: [18, 28], behavior: 2, hasBranch: true, image: "../assets/ElectroAguirre.png", url: "https://www.electroaguirre.com.ar/" },
-            { id: 3, pos: [35, 70], text: "APLICACIONES\nWEB", label: "EXPERIENCIAS_INTERACTIVAS", life: [28, 42], behavior: 3, image: "../assets/FGHerreria.png", url: "https://www.fgherreria.com.ar/" },
-            { id: 4, pos: [70, 30], text: "SITIOS\nCORPORATIVOS", label: "PRESENCIA_PREMIUM", life: [44, 56], behavior: 4, hasBranch: true, image: "../assets/Panzo.png", url: "https://panzo.com.ar/" },
-            { id: 5, pos: [50, 60], text: "DISEÑO\nPORTFOLIO", label: "IMPACTO_VISUAL", life: [58, 70], behavior: 1 }
+            { id: 1, pos: [50, 25], text: "LANDING\nPAGES", label: "MAXIMUM_CONVERSION", life: [6, 18], behavior: 1, image: "/portfolio/assets/EsquinaJardin.png", url: "https://viveroesquinajardin.com.ar/" },
+            { id: 2, pos: [75, 45], text: "E-COMMERCE\nPLATFORMS", label: "SALES_24/7", life: [18, 28], behavior: 2, hasBranch: true, image: "/portfolio/assets/ElectroAguirre.png", url: "https://www.electroaguirre.com.ar/" },
+            { id: 3, pos: [35, 70], text: "WEB\nAPPS", label: "INTERACTIVE_EXPERIENCES", life: [28, 42], behavior: 3, image: "/portfolio/assets/FGHerreria.png", url: "https://www.fgherreria.com.ar/" },
+            { id: 4, pos: [70, 30], text: "CORPORATE\nSITES", label: "PREMIUM_PRESENCE", life: [44, 56], behavior: 4, hasBranch: true, image: "/portfolio/assets/Panzo.png", url: "https://panzo.com.ar/" },
+            { id: 5, pos: [50, 60], text: "PORTFOLIO\nDESIGN", label: "VISUAL_IMPACT", life: [58, 70], behavior: 1 }
         ];
 
         // Create Text Elements (without images)
@@ -1189,7 +1064,7 @@
             div.style.top = `${n.pos[1]}%`;
 
             div.innerHTML = `
-                <div class="primary-text" style="font-size: 7vw;"><span class="content"></span><span class="cursor"></span></div>
+                <div class="primary-text" style="font-size: 8vw;"><span class="content"></span><span class="cursor"></span></div>
                 <span class="data-label"></span>
             `;
             stage.appendChild(div);
@@ -1245,25 +1120,9 @@
             imageDiv.style.left = `${randomX}%`;
             imageDiv.style.top = `${randomY}%`;
 
-            // Create responsive WebP images with PNG fallback
-            const imageName = n.image.replace('../assets/', '').replace('.png', '');
             imageDiv.innerHTML = `
                 <a href="${n.url}" class="project-image-link" target="_blank" rel="noopener noreferrer" data-project-link="true">
-                    <picture>
-                        <source 
-                            type="image/webp"
-                            srcset="../assets/${imageName}-small.webp 613w,
-                                    ../assets/${imageName}-medium.webp 900w,
-                                    ../assets/${imageName}-large.webp 1334w"
-                            sizes="(max-width: 768px) 85vw, 600px">
-                        <img 
-                            src="${n.image}" 
-                            alt="${n.text.replace('\n', ' ')}" 
-                            class="project-image"
-                            loading="lazy"
-                            decoding="async"
-                            draggable="false">
-                    </picture>
+                    <img src="${n.image}" alt="${n.text.replace('\n', ' ')}" class="project-image" draggable="false">
                     <div class="project-overlay"></div>
                 </a>
             `;
@@ -1408,6 +1267,7 @@
 
         // Desktop: Mouse Wheel
         let wheelTimeout;
+        const scrollIndicator = document.getElementById('scroll-indicator');
 
         window.addEventListener('wheel', (e) => {
             e.preventDefault();
@@ -1524,7 +1384,6 @@
         });
 
         // Update function now uses virtualProgress instead of real scroll
-
         function update() {
             const w = window.innerWidth;
             const h = window.innerHeight;
@@ -2019,12 +1878,12 @@
 
             <div class="flex justify-between items-start mb-6">
                 <div>
-                    <p class="text-[9px] text-emerald-500 tracking-[0.3em] mb-1">PROTOCOLO // FLUJO_DE_TRABAJO</p>
-                    <h2 class="text-2xl font-bold text-white uppercase italic">¿Cómo trabajamos?</h2>
+                    <p class="text-[9px] text-emerald-500 tracking-[0.3em] mb-1">PROTOCOL // WORKFLOW</p>
+                    <h2 class="text-2xl font-bold text-white uppercase italic">How we work</h2>
                 </div>
                 <button onclick="closeMethodModal()"
                     class="close-btn text-xs tracking-widest text-emerald-500 hover:text-white transition-colors">
-                    [ CERRAR ]
+                    [ CLOSE ]
                 </button>
             </div>
 
@@ -2034,12 +1893,11 @@
                     <div class="step-content">
                         <div class="flex items-center space-x-2 mb-1">
                             <span class="text-emerald-500 text-[10px] font-bold">01</span>
-                            <h3 class="text-white font-bold text-base uppercase">Alineación de Concepto</h3>
+                            <h3 class="text-white font-bold text-base uppercase">Concept Alignment</h3>
                         </div>
                         <p class="text-gray-400 text-xs leading-relaxed">
-                            Nos sumergimos en tu visión para asegurar que cada estrategia digital esté alineada
-                            perfectamente con tus objetivos de negocio. Sin soluciones genéricas, solo ingeniería a
-                            medida.
+                            We dive deep into your vision to ensure every digital strategy aligns perfectly with your
+                            business goals. No generic solutions, just tailored engineering.
                         </p>
                     </div>
                 </div>
@@ -2049,11 +1907,11 @@
                     <div class="step-content">
                         <div class="flex items-center space-x-2 mb-1">
                             <span class="text-emerald-500 text-[10px] font-bold">02</span>
-                            <h3 class="text-white font-bold text-base uppercase">UX Estratégica</h3>
+                            <h3 class="text-white font-bold text-base uppercase">Strategic UX</h3>
                         </div>
                         <p class="text-gray-400 text-xs leading-relaxed">
-                            Creamos interfaces que no son solo visualmente impactantes, sino que están diseñadas para
-                            convertir visitantes en clientes leales mediante recorridos de usuario fluidos.
+                            We craft interfaces that aren't just visually stunning, but engineered to convert visitors
+                            into loyal customers through seamless user journeys.
                         </p>
                     </div>
                 </div>
@@ -2063,11 +1921,11 @@
                     <div class="step-content">
                         <div class="flex items-center space-x-2 mb-1">
                             <span class="text-emerald-500 text-[10px] font-bold">03</span>
-                            <h3 class="text-white font-bold text-base uppercase">Excelencia Técnica</h3>
+                            <h3 class="text-white font-bold text-base uppercase">Technical Excellence</h3>
                         </div>
                         <p class="text-gray-400 text-xs leading-relaxed">
-                            Ingeniería de alto rendimiento. Construimos arquitecturas ultrarrápidas, seguras y
-                            adaptables que proporcionan una base sólida para el crecimiento de tu marca.
+                            High-performance engineering. We build lightning-fast, secure, and responsive architectures
+                            that provide a rock-solid foundation for your brand.
                         </p>
                     </div>
                 </div>
@@ -2077,11 +1935,11 @@
                     <div class="step-content">
                         <div class="flex items-center space-x-2 mb-1">
                             <span class="text-emerald-500 text-[10px] font-bold">04</span>
-                            <h3 class="text-white font-bold text-base uppercase">Evolución Continua</h3>
+                            <h3 class="text-white font-bold text-base uppercase">Continuous Evolution</h3>
                         </div>
                         <p class="text-gray-400 text-xs leading-relaxed">
-                            Despliegue de precisión. Monitoreamos y optimizamos tu plataforma después del lanzamiento
-                            para garantizar un rendimiento máximo y estabilidad constante.
+                            Precision deployment. We monitor and optimize your platform post-launch to guarantee peak
+                            performance and stability in a changing digital landscape.
                         </p>
                     </div>
                 </div>
@@ -2095,40 +1953,41 @@
 
             <div class="flex justify-between items-start mb-6">
                 <div>
-                    <p class="text-[9px] text-emerald-500 tracking-[0.3em] mb-1">CONTACTO</p>
-                    <h2 class="text-2xl font-bold text-white uppercase italic">Iniciar Proyecto</h2>
+                    <p class="text-[9px] text-emerald-500 tracking-[0.3em] mb-1">CONTACT US</p>
+                    <h2 class="text-2xl font-bold text-white uppercase italic">Start Your Project</h2>
                 </div>
                 <button onclick="closeContactModal()"
                     class="close-btn text-xs tracking-widest text-emerald-500 hover:text-white transition-colors">
-                    [ CERRAR ]
+                    [ CLOSE ]
                 </button>
             </div>
 
             <form class="contact-form" action="https://formspree.io/f/xdakqnrr" method="POST">
                 <div class="form-group">
-                    <label class="form-label">Nombre</label>
-                    <input type="text" name="name" class="form-input" placeholder="INGRESE SU NOMBRE..." required>
+                    <label class="form-label">Name</label>
+                    <input type="text" name="name" class="form-input" placeholder="ENTER YOUR NAME..." required>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Email</label>
-                    <input type="email" name="email" class="form-input" placeholder="INGRESE SU EMAIL..." required>
+                    <input type="email" name="email" class="form-input" placeholder="ENTER YOUR EMAIL..." required>
                 </div>
                 <div class="form-group">
-                    <label class="form-label">Tipo de Proyecto</label>
+                    <label class="form-label">Project Type</label>
                     <select name="type" class="form-input" required>
-                        <option value="" disabled selected>SELECCIONE TIPO DE PROYECTO...</option>
+                        <option value="" disabled selected>SELECT PROJECT TYPE...</option>
                         <option value="landing">Landing Page</option>
                         <option value="ecommerce">E-Commerce</option>
-                        <option value="webapp">Aplicación Web</option>
-                        <option value="corporate">Sitio Corporativo</option>
-                        <option value="other">Otro / Personalizado</option>
+                        <option value="webapp">Web Application</option>
+                        <option value="corporate">Corporate Site</option>
+                        <option value="other">Other / Custom</option>
                     </select>
                 </div>
                 <div class="form-group">
-                    <label class="form-label">Mensaje</label>
-                    <textarea name="message" class="form-input" placeholder="DESCRIBA SU VISIÓN..." required></textarea>
+                    <label class="form-label">Message</label>
+                    <textarea name="message" class="form-input" placeholder="DESCRIBE YOUR VISION..."
+                        required></textarea>
                 </div>
-                <button type="submit" class="submit-btn">[ ENVIAR MENSAJE ]</button>
+                <button type="submit" class="submit-btn">[ SEND MESSAGE ]</button>
             </form>
         </div>
     </div>
