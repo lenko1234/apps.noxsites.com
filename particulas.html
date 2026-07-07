@@ -487,9 +487,12 @@
                         targetZ = squareTargets[i3 + 2];
                         break;
                     case 'planet':
-                        targetX = planetTargets[i3];
+                        const pAngle = time * 0.05;
+                        const pCos = Math.cos(pAngle);
+                        const pSin = Math.sin(pAngle);
+                        targetX = planetTargets[i3] * pCos - planetTargets[i3 + 2] * pSin;
                         targetY = planetTargets[i3 + 1];
-                        targetZ = planetTargets[i3 + 2];
+                        targetZ = planetTargets[i3] * pSin + planetTargets[i3 + 2] * pCos;
                         break;
                     case 'dna':
                         targetX = dnaTargets[i3];
@@ -538,15 +541,6 @@
                                 targetZ = -200; // Muy atrás, invisible
                             }
                         }
-                    } else if (currentShape === 'planet') {
-                        // Planeta: rotación continua y fluida
-                        const angle = time * 0.05;
-                        const cosA = Math.cos(angle);
-                        const sinA = Math.sin(angle);
-                        const newX = targetX * cosA - targetZ * sinA;
-                        const newZ = targetX * sinA + targetZ * cosA;
-                        targetX = newX;
-                        targetZ = newZ;
                     }
                 }
 
@@ -591,8 +585,35 @@
                 camera.position.y += (0 - camera.position.y) * 0.05;
                 camera.position.x += (0 - camera.position.x) * 0.05;
             } else if (scrollProgress > 0.15) {
-                // Otras formas geométricas - vista estándar
-                camera.position.z += (90 - camera.position.z) * 0.05;
+                // Otras formas geométricas - vista estándar (con zoom inmersivo y alejamiento dinámico)
+                let targetZ = 90;
+                
+                if (currentShape === 'planet') {
+                    let zoomFactor = 0;
+                    if (scrollProgress >= 0.51 && scrollProgress < 0.57) {
+                        // Formando: viene desde 125 (lejos) y entra hasta 38 (núcleo)
+                        zoomFactor = (scrollProgress - 0.51) / 0.06;
+                        targetZ = 125 - (zoomFactor * 87);
+                    } else if (scrollProgress >= 0.57 && scrollProgress < 0.63) {
+                        // Hold: se queda en el núcleo (38)
+                        targetZ = 38;
+                    } else if (scrollProgress >= 0.63 && scrollProgress < 0.69) {
+                        // Desarmándose: zoom out diferido hacia 125 (lejos)
+                        if (scrollProgress < 0.66) {
+                            targetZ = 38; // Se queda en el núcleo inicialmente
+                        } else {
+                            zoomFactor = (scrollProgress - 0.66) / 0.03;
+                            targetZ = 38 + (zoomFactor * 87); // Se aleja rápidamente al final
+                        }
+                    }
+                } else if (currentShape === 'square') {
+                    if (scrollProgress >= 0.45 && scrollProgress < 0.51) {
+                        // Al desarmarse el cuadrado, la cámara se aleja hacia 125 para preparar la formación del planeta desde lejos
+                        const factor = (scrollProgress - 0.45) / 0.06;
+                        targetZ = 90 + (factor * 35);
+                    }
+                }
+                camera.position.z += (targetZ - camera.position.z) * 0.05;
                 camera.position.y += (0 - camera.position.y) * 0.05;
                 camera.position.x += (0 - camera.position.x) * 0.05;
             } else {

@@ -78,7 +78,7 @@
 
         #hero-ui {
             position: fixed;
-            top: 30px;
+            top: 90px;
             left: 30px;
             z-index: 15;
             pointer-events: none;
@@ -88,6 +88,21 @@
 
         @media (max-width: 768px) {
             #hero-ui {
+                top: 80px;
+                left: 20px;
+            }
+        }
+
+        .back-btn {
+            position: fixed;
+            top: 30px;
+            left: 30px;
+            z-index: 1000;
+            pointer-events: auto;
+        }
+
+        @media (max-width: 768px) {
+            .back-btn {
                 top: 20px;
                 left: 20px;
             }
@@ -897,10 +912,10 @@
 <body>
 
     <!-- Back to Home -->
-    <div style="position: fixed; top: 30px; left: 30px; z-index: 1000; pointer-events: auto;">
+    <div class="back-btn">
         <a href="/" class="lang-btn"
-            style="display: flex; align-items: center; gap: 0.5rem; text-transform: uppercase;">
-            <span style="font-size: 14px;">←</span> Soluciones
+            style="display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 50%; text-decoration: none; font-size: 16px; padding: 0;">
+            ←
         </a>
     </div>
 

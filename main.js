@@ -106,13 +106,30 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
     const navLinks = document.querySelector('.nav-links');
+    
+    function updateMenuIcon() {
+        if (!mobileMenuBtn) return;
+        const icon = mobileMenuBtn.querySelector('i');
+        if (icon) {
+            const isActive = navLinks.classList.contains('active');
+            icon.setAttribute('data-lucide', isActive ? 'x' : 'menu');
+            lucide.createIcons();
+        }
+    }
+
     if (mobileMenuBtn) {
-        mobileMenuBtn.addEventListener('click', () => navLinks.classList.toggle('active'));
+        mobileMenuBtn.addEventListener('click', () => {
+            navLinks.classList.toggle('active');
+            updateMenuIcon();
+        });
     }
 
     document.querySelectorAll('.nav-links a').forEach(link => {
         link.addEventListener('click', () => {
-            if (navLinks) navLinks.classList.remove('active');
+            if (navLinks) {
+                navLinks.classList.remove('active');
+                updateMenuIcon();
+            }
         });
     });
 
