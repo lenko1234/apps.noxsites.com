@@ -12,6 +12,7 @@ export default defineConfig({
                 portfolio: resolve(__dirname, 'portfolio/index.html'),
                 portfolio_es: resolve(__dirname, 'portfolio/es/index.html'),
                 en: resolve(__dirname, 'en/index.html'),
+                bento_test: resolve(__dirname, 'bento-test.html'),
             },
         },
     },

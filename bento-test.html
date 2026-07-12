@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NOX | Abstract Visual Hero Test</title>
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        :root {
+            --primary: #10b981;
+            --primary-dark: #064e3b;
+            --primary-glow: rgba(16, 185, 129, 0.25);
+            --bg-dark: #0a0a0a;
+            --bg-surface: #121212;
+            --text-main: #ffffff;
+            --text-muted: #a1a1aa;
+            --font-heading: 'Outfit', sans-serif;
+            --font-body: 'Inter', sans-serif;
+            --transition-smooth: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            font-family: var(--font-body);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            overflow-x: hidden;
+            padding: 2rem 1rem;
+            position: relative;
+        }
+
+        /* Ambient Glow Backgrounds */
+        .ambient-glow {
+            position: absolute;
+            top: 20%;
+            right: 10%;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, var(--primary-dark) 0%, transparent 70%);
+            opacity: 0.2;
+            filter: blur(80px);
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        /* Tech Grid Overlay */
+        .grid-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(255, 255, 255, 0.008) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.008) 1px, transparent 1px);
+            background-size: 60px 60px;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            position: relative;
+            z-index: 10;
+        }
+
+        /* Top Bar Info */
+        .top-info {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .top-info h1 {
+            font-family: var(--font-heading);
+            font-size: 2.2rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(180deg, #fff 0%, #a1a1aa 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .top-info p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .badge-preview {
+            display: inline-block;
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--primary);
+            padding: 0.4rem 1rem;
+            border-radius: 99px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 1rem;
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+
+        /* Split Screen Hero Simulation */
+        .hero-preview {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2rem;
+            align-items: center;
+            margin-top: 1rem;
+        }
+
+        @media (min-width: 1024px) {
+            .hero-preview {
+                grid-template-columns: 1.1fr 0.9fr;
+                gap: 4rem;
+            }
+        }
+
+        /* Left Side: Mock Text Content */
+        .mock-hero-text {
+            text-align: left;
+        }
+
+        .mock-hero-text h2 {
+            font-family: var(--font-heading);
+            font-size: clamp(2.2rem, 5vw, 3.5rem);
+            line-height: 1.1;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+        }
+
+        .mock-hero-text h2 span {
+            color: var(--primary);
+            text-shadow: 0 0 20px rgba(16, 185, 129, 0.15);
+        }
+
+        .mock-hero-text p {
+            font-size: 1.1rem;
+            color: var(--text-muted);
+            margin-bottom: 2rem;
+            line-height: 1.6;
+        }
+
+        .mock-buttons {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .btn-mock {
+            padding: 0.8rem 2rem;
+            border-radius: 99px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+        }
+
+        .btn-mock.primary {
+            background: var(--primary);
+            color: #000;
+            border: none;
+        }
+
+        .btn-mock.primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px var(--primary-glow);
+            background: #34d399;
+        }
+
+        .btn-mock.outline {
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #fff;
+        }
+
+        .btn-mock.outline:hover {
+            border-color: var(--primary);
+            background: rgba(16, 185, 129, 0.05);
+            color: var(--primary);
+        }
+
+        /* ------------------------------------------------------------- */
+        /* ABSTRACT INTERACTIVE VISUAL CONTAINER                        */
+        /* ------------------------------------------------------------- */
+        .visual-showcase-container {
+            width: 100%;
+            height: 480px;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Ambient glowing circles behind the 3D canvas */
+        .visual-bg-circle {
+            position: absolute;
+            width: 250px;
+            height: 250px;
+            background: radial-gradient(circle, var(--primary-dark) 0%, transparent 70%);
+            opacity: 0.4;
+            filter: blur(50px);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 2;
+            animation: float-slow 8s infinite ease-in-out;
+        }
+
+        .visual-bg-circle.alt {
+            background: radial-gradient(circle, rgba(16, 185, 129, 0.15) 0%, transparent 70%);
+            animation: float-slow-alt 12s infinite ease-in-out;
+        }
+
+        @keyframes float-slow {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(30px, -20px) scale(1.1); }
+        }
+
+        @keyframes float-slow-alt {
+            0%, 100% { transform: translate(0, 0) scale(1.1); }
+            50% { transform: translate(-30px, 30px) scale(0.9); }
+        }
+
+        /* Three.js canvas container */
+        .canvas-container {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 5;
+            cursor: grab;
+        }
+
+        .canvas-container:active {
+            cursor: grabbing;
+        }
+
+        /* Floating glassmorphic plates overlay - pure aesthetic, no data */
+        .glass-plate-layer {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .glass-plate {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.015);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            box-shadow: 
+                0 30px 60px -20px rgba(0, 0, 0, 0.6),
+                inset 0 1px 0 rgba(255, 255, 255, 0.05);
+            transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        /* Individual glass plate positions, sizes and animations */
+        .plate-1 {
+            width: 160px;
+            height: 160px;
+            top: 15%;
+            left: 5%;
+            transform: rotate(-12deg);
+            animation: plate-drift-1 14s infinite ease-in-out;
+            background: linear-gradient(135deg, rgba(255,255,255,0.02) 0%, rgba(255,255,255,0.005) 100%);
+        }
+
+        .plate-2 {
+            width: 120px;
+            height: 200px;
+            bottom: 10%;
+            right: 5%;
+            transform: rotate(15deg);
+            animation: plate-drift-2 18s infinite ease-in-out;
+            background: linear-gradient(135deg, rgba(255,255,255,0.005) 0%, rgba(255,255,255,0.02) 100%);
+        }
+
+        .plate-3 {
+            width: 90px;
+            height: 90px;
+            top: 50%;
+            left: 55%;
+            border-radius: 50%; /* Circle glass */
+            transform: translate(-50%, -50%);
+            border-color: rgba(16, 185, 129, 0.15);
+            animation: plate-drift-3 10s infinite ease-in-out;
+            background: rgba(16, 185, 129, 0.01);
+            backdrop-filter: blur(8px);
+        }
+
+        @keyframes plate-drift-1 {
+            0%, 100% { transform: translateY(0) rotate(-12deg) scale(1); }
+            50% { transform: translateY(-15px) rotate(-9deg) scale(1.03); }
+        }
+
+        @keyframes plate-drift-2 {
+            0%, 100% { transform: translateY(0) rotate(15deg) scale(1); }
+            50% { transform: translateY(15px) rotate(18deg) scale(0.97); }
+        }
+
+        @keyframes plate-drift-3 {
+            0%, 100% { transform: translate(-50%, -50%) translate(0, 0); }
+            50% { transform: translate(-50%, -50%) translate(10px, -15px) scale(1.05); }
+        }
+
+        /* Glowing ring accents within the layout */
+        .glow-ring {
+            position: absolute;
+            border-radius: 50%;
+            border: 1px dashed rgba(16, 185, 129, 0.2);
+            pointer-events: none;
+            z-index: 3;
+        }
+
+        .ring-1 {
+            width: 320px;
+            height: 320px;
+            animation: spin-slow 40s linear infinite;
+        }
+
+        .ring-2 {
+            width: 420px;
+            height: 420px;
+            animation: spin-reverse-slow 60s linear infinite;
+            border-color: rgba(255, 255, 255, 0.03);
+        }
+
+        @keyframes spin-slow {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes spin-reverse-slow {
+            from { transform: rotate(360deg); }
+            to { transform: rotate(0deg); }
+        }
+
+        /* Controls / switcher at bottom for user convenience */
+        .back-nav {
+            margin-top: 4rem;
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            z-index: 100;
+        }
+
+        .back-link {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+            transition: var(--transition-smooth);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .back-link:hover {
+            color: var(--primary);
+            border-color: rgba(16, 185, 129, 0.3);
+            background: rgba(16, 185, 129, 0.05);
+        }
+
+    </style>
+</head>
+
+<body>
+    <!-- Tech Grid Overlay -->
+    <div class="grid-overlay"></div>
+    <div class="ambient-glow"></div>
+
+    <div class="container">
+        <!-- Top Title & Badge -->
+        <div class="top-info">
+            <span class="badge-preview">Propuesta Visual 2</span>
+            <h1>Abstract Interactive Art Mockup</h1>
+            <p>Una composición tridimensional fluida e interactiva de partículas y paneles de cristal flotantes. Sin datos, pura estética premium y movimiento moderno.</p>
+        </div>
+
+        <!-- Split Screen Hero Simulation -->
+        <div class="hero-preview">
+            
+            <!-- Left Side (Text content from existing landing page) -->
+            <div class="mock-hero-text">
+                <span class="badge-preview" style="background: rgba(16, 185, 129, 0.08); border-color: rgba(16, 185, 129, 0.15);">Expertos en Conversión Digital</span>
+                <h2>Sistemas de Catálogo de <br><span>alto impacto</span></h2>
+                <p>Potenciamos agencias y negocios con herramientas digitales de estética premium diseñadas para vender más y automatizar procesos sin fricciones.</p>
+                
+                <div class="mock-buttons">
+                    <div class="btn-mock primary">Ver Soluciones <i data-lucide="arrow-right" style="width: 16px; height: 16px;"></i></div>
+                    <div class="btn-mock outline">Ver Portfolio</div>
+                </div>
+            </div>
+
+            <!-- Right Side (The Abstract Visual) -->
+            <div class="visual-showcase-container" id="visualContainer">
+                <!-- Background radial glows -->
+                <div class="visual-bg-circle"></div>
+                <div class="visual-bg-circle alt"></div>
+                
+                <!-- Orbiting Rings -->
+                <div class="glow-ring ring-1"></div>
+                <div class="glow-ring ring-2"></div>
+
+                <!-- Three.js Canvas Container -->
+                <div class="canvas-container" id="canvasContainer"></div>
+
+                <!-- Floating Glassmorphic Plates Overlay -->
+                <div class="glass-plate-layer">
+                    <div class="glass-plate plate-1"></div>
+                    <div class="glass-plate plate-2"></div>
+                    <div class="glass-plate plate-3"></div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Navigation Buttons -->
+        <div class="back-nav">
+            <a href="/index.html" class="back-link">
+                <i data-lucide="arrow-left" style="width: 16px; height: 16px;"></i> Volver al index de producción
+            </a>
+        </div>
+    </div>
+
+    <script>
+        // Init Lucide Icons
+        lucide.createIcons();
+
+        // -------------------------------------------------------------
+        // THREE.JS INTERACTIVE FLUID PARTICLES ORB                       
+        // -------------------------------------------------------------
+        
+        const container = document.getElementById('canvasContainer');
+        const containerWidth = container.clientWidth;
+        const containerHeight = container.clientHeight;
+
+        // Scene, Camera, Renderer
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(45, containerWidth / containerHeight, 0.1, 1000);
+        camera.position.z = 100;
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(containerWidth, containerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        container.appendChild(renderer.domElement);
+
+        // Particle System Setup
+        const particleCount = 2500;
+        const particleGeometry = new THREE.BufferGeometry();
+        const initialPositions = new Float32Array(particleCount * 3);
+        const currentPositions = new Float32Array(particleCount * 3);
+        const sizes = new Float32Array(particleCount);
+
+        // Distribute particles in a spherical shape
+        for (let i = 0; i < particleCount; i++) {
+            const i3 = i * 3;
+            
+            // Random spherical coordinates
+            const u = Math.random();
+            const v = Math.random();
+            const theta = u * 2.0 * Math.PI;
+            const phi = Math.acos(2.0 * v - 1.0);
+            
+            // Sphere radius
+            const radius = 22 + Math.random() * 4;
+            
+            initialPositions[i3] = radius * Math.sin(phi) * Math.cos(theta);
+            initialPositions[i3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
+            initialPositions[i3 + 2] = radius * Math.cos(phi);
+            
+            sizes[i] = Math.random() * 2 + 1;
+        }
+
+        // Copy initial to current positions
+        for (let i = 0; i < initialPositions.length; i++) {
+            currentPositions[i] = initialPositions[i];
+        }
+
+        particleGeometry.setAttribute('position', new THREE.BufferAttribute(currentPositions, 3));
+
+        // Create a custom soft particle texture programmatically
+        const createParticleTexture = () => {
+            const canvas = document.createElement('canvas');
+            canvas.width = 16;
+            canvas.height = 16;
+            const ctx = canvas.getContext('2d');
+            const grad = ctx.createRadialGradient(8, 8, 0, 8, 8, 8);
+            grad.addColorStop(0, 'rgba(255, 255, 255, 1)');
+            grad.addColorStop(0.3, 'rgba(16, 185, 129, 0.8)');
+            grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, 16, 16);
+            return new THREE.CanvasTexture(canvas);
+        };
+
+        // Material config for glowing green particles
+        const particleMaterial = new THREE.PointsMaterial({
+            color: 0x10b981,
+            size: 0.8,
+            map: createParticleTexture(),
+            transparent: true,
+            opacity: 0.85,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false
+        });
+
+        const particleSystem = new THREE.Points(particleGeometry, particleMaterial);
+        scene.add(particleSystem);
+
+        // Core Wireframe Sphere for extra geometric density
+        const coreGeometry = new THREE.IcosahedronGeometry(12, 2);
+        const coreMaterial = new THREE.MeshBasicMaterial({
+            color: 0x10b981,
+            wireframe: true,
+            transparent: true,
+            opacity: 0.1,
+            blending: THREE.AdditiveBlending
+        });
+        const coreMesh = new THREE.Mesh(coreGeometry, coreMaterial);
+        scene.add(coreMesh);
+
+        // Interactions and Mouse tracking variables
+        let mouseX = 0;
+        let mouseY = 0;
+        let targetX = 0;
+        let targetY = 0;
+
+        const windowHalfX = containerWidth / 2;
+        const windowHalfY = containerHeight / 2;
+
+        document.addEventListener('mousemove', (event) => {
+            const rect = container.getBoundingClientRect();
+            // Check if mouse is near or on the hero section
+            const relativeX = event.clientX - rect.left;
+            const relativeY = event.clientY - rect.top;
+            
+            // Only update target if mouse is active in/near the visual
+            targetX = (relativeX - windowHalfX) * 0.08;
+            targetY = (relativeY - windowHalfY) * 0.08;
+        });
+
+        // Touch support
+        document.addEventListener('touchmove', (event) => {
+            if (event.touches.length > 0) {
+                const rect = container.getBoundingClientRect();
+                const relativeX = event.touches[0].clientX - rect.left;
+                const relativeY = event.touches[0].clientY - rect.top;
+                targetX = (relativeX - windowHalfX) * 0.08;
+                targetY = (relativeY - windowHalfY) * 0.08;
+            }
+        });
+
+        // 3D Parallax tilt effect on the Glass Plates
+        const plates = document.querySelectorAll('.glass-plate');
+        const updatePlatesParallax = () => {
+            plates.forEach((plate, index) => {
+                const depthFactor = (index + 1) * 0.35;
+                const tx = mouseX * depthFactor;
+                const ty = mouseY * depthFactor;
+                
+                // Set custom style
+                let baseTransform = '';
+                if (index === 0) baseTransform = 'rotate(-12deg)';
+                if (index === 1) baseTransform = 'rotate(15deg)';
+                if (index === 2) baseTransform = 'translate(-50%, -50%)';
+                
+                plate.style.transform = `${baseTransform} translate3d(${tx}px, ${ty}px, 0)`;
+            });
+        };
+
+        // Animation Loop
+        const clock = new THREE.Clock();
+
+        const animate = () => {
+            requestAnimationFrame(animate);
+
+            const time = clock.getElapsedTime();
+            
+            // Interpolate mouse movement for smooth delay
+            mouseX += (targetX - mouseX) * 0.05;
+            mouseY += (targetY - mouseY) * 0.05;
+
+            // Rotate particle system and wireframe
+            particleSystem.rotation.y = time * 0.08;
+            particleSystem.rotation.x = time * 0.04;
+            coreMesh.rotation.y = -time * 0.12;
+            coreMesh.rotation.x = -time * 0.06;
+
+            // Tilt camera slightly based on mouse drag/movement
+            camera.position.x = mouseX * 0.8;
+            camera.position.y = -mouseY * 0.8;
+            camera.lookAt(scene.position);
+
+            // Update Glass Plates
+            updatePlatesParallax();
+
+            // Deform / Morph Particle positions using wave mathematics (Breathing/Organic effect)
+            const positions = particleGeometry.attributes.position.array;
+            
+            for (let i = 0; i < particleCount; i++) {
+                const i3 = i * 3;
+                
+                // Base initial position coordinates
+                const x = initialPositions[i3];
+                const y = initialPositions[i3 + 1];
+                const z = initialPositions[i3 + 2];
+                
+                // Calculate original distance from center
+                const dist = Math.sqrt(x*x + y*y + z*z);
+                
+                // Dynamic multi-frequency sine wave equation
+                const waveFactor = 
+                    Math.sin(x * 0.06 + time * 1.5) * 
+                    Math.cos(y * 0.06 + time * 1.2) * 
+                    Math.sin(z * 0.06 + time * 1.8);
+                
+                // Scale factor changes (deforms sphere outward/inward organically)
+                const scale = 1.0 + waveFactor * 0.15;
+                
+                positions[i3] = x * scale;
+                positions[i3 + 1] = y * scale;
+                positions[i3 + 2] = z * scale;
+            }
+            
+            particleGeometry.attributes.position.needsUpdate = true;
+
+            renderer.render(scene, camera);
+        };
+
+        animate();
+
+        // Handle Resizing
+        window.addEventListener('resize', () => {
+            const newWidth = container.clientWidth;
+            const newHeight = container.clientHeight;
+            
+            camera.aspect = newWidth / newHeight;
+            camera.updateProjectionMatrix();
+            
+            renderer.setSize(newWidth, newHeight);
+        });
+
+    </script>
+</body>
+
+</html>

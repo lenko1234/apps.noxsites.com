@@ -416,30 +416,30 @@
                 // Transición a Planeta (51-57%)
                 currentShape = 'planet';
                 shapeFactor = (scrollProgress - 0.51) / 0.06;
-            } else if (scrollProgress < 0.63) {
-                // Hold Planeta completo (57-63%)
+            } else if (scrollProgress < 0.71) {
+                // El mundo gira a nuestro alrededor estando adentro (57-71%)
                 currentShape = 'planet';
                 shapeFactor = 1;
-            } else if (scrollProgress < 0.69) {
-                // Vuelta a Vórtice desde Planeta (63-69%)
+            } else if (scrollProgress < 0.77) {
+                // Vuelta a Vórtice desde Planeta (71-77%)
                 currentShape = 'planet';
-                shapeFactor = 1 - ((scrollProgress - 0.63) / 0.06);
-            } else if (scrollProgress < 0.75) {
-                // Transición a DNA (69-75%)
+                shapeFactor = 1 - ((scrollProgress - 0.71) / 0.06);
+            } else if (scrollProgress < 0.83) {
+                // Transición a DNA (77-83%)
                 currentShape = 'dna';
-                shapeFactor = (scrollProgress - 0.69) / 0.06;
-            } else if (scrollProgress < 0.81) {
-                // Hold DNA completo (75-81%)
+                shapeFactor = (scrollProgress - 0.77) / 0.06;
+            } else if (scrollProgress < 0.89) {
+                // Hold DNA completo (83-89%)
                 currentShape = 'dna';
                 shapeFactor = 1;
-            } else if (scrollProgress < 0.87) {
-                // Vuelta a Vórtice desde DNA (81-87%)
+            } else if (scrollProgress < 0.93) {
+                // Vuelta a Vórtice desde DNA (89-93%)
                 currentShape = 'dna';
-                shapeFactor = 1 - ((scrollProgress - 0.81) / 0.06);
+                shapeFactor = 1 - ((scrollProgress - 0.89) / 0.04);
             } else {
-                // Transición final a Logo (87-100%)
+                // Transición final a Logo (93-100%)
                 currentShape = 'logo';
-                shapeFactor = (scrollProgress - 0.87) / 0.13;
+                shapeFactor = (scrollProgress - 0.93) / 0.07;
             }
 
             shapeFactor = Math.max(0, Math.min(1, shapeFactor));
@@ -450,7 +450,7 @@
                 'vortex': 'VORTEX_FLOW',
                 'sphere': shapeFactor === 1 ? 'SPHERE_FORM' : 'MORPHING',
                 'square': shapeFactor === 1 ? 'SQUARE_PLANE' : 'MORPHING',
-                'planet': shapeFactor === 1 ? 'PLANET_TERRAIN' : 'MORPHING',
+                'planet': scrollProgress >= 0.57 && scrollProgress < 0.71 ? 'TERRAIN_REVOLUTION' : (shapeFactor === 1 ? 'PLANET_TERRAIN' : 'MORPHING'),
                 'dna': shapeFactor === 1 ? 'DNA_HELIX' : 'MORPHING',
                 'logo': shapeFactor > 0.8 ? 'LOGO_LOCKED' : 'LOGO_ASSEMBLY'
             };
@@ -487,7 +487,13 @@
                         targetZ = squareTargets[i3 + 2];
                         break;
                     case 'planet':
-                        const pAngle = time * 0.05;
+                        // Rotación basal lenta (time * 0.01) + giro completo de 360 grados por scroll durante la fase de revolución (57% a 71%)
+                        let pAngle = time * 0.01;
+                        if (scrollProgress >= 0.57 && scrollProgress < 0.71) {
+                            pAngle += ((scrollProgress - 0.57) / 0.14) * Math.PI * 2;
+                        } else if (scrollProgress >= 0.71) {
+                            pAngle += Math.PI * 2;
+                        }
                         const pCos = Math.cos(pAngle);
                         const pSin = Math.sin(pAngle);
                         targetX = planetTargets[i3] * pCos - planetTargets[i3 + 2] * pSin;
@@ -555,8 +561,8 @@
             // Cámara - ajuste según la forma con viaje especial para DNA
             if (currentShape === 'dna') {
                 // Durante DNA, hacemos un viaje vertical a lo largo de la espiral
-                // Calculamos el progreso dentro de la fase DNA completa (69-87%)
-                const dnaPhaseProgress = (scrollProgress - 0.69) / 0.18; // 0 a 1 durante toda la fase DNA
+                // Calculamos el progreso dentro de la fase DNA completa (77-93%)
+                const dnaPhaseProgress = (scrollProgress - 0.77) / 0.16; // 0 a 1 durante toda la fase DNA
 
                 // Zoom in al principio, luego viaje vertical
                 if (dnaPhaseProgress < 0.2) {
@@ -578,7 +584,7 @@
                     camera.position.y += (0 - camera.position.y) * 0.08;
                     camera.position.x += (0 - camera.position.x) * 0.08;
                 }
-            } else if (scrollProgress > 0.87) {
+            } else if (scrollProgress > 0.93) {
                 // Transición final al logo
                 const targetZ = 65 + (1 - shapeFactor) * 20;
                 camera.position.z += (targetZ - camera.position.z) * 0.05;
@@ -594,15 +600,15 @@
                         // Formando: viene desde 125 (lejos) y entra hasta 38 (núcleo)
                         zoomFactor = (scrollProgress - 0.51) / 0.06;
                         targetZ = 125 - (zoomFactor * 87);
-                    } else if (scrollProgress >= 0.57 && scrollProgress < 0.63) {
-                        // Hold: se queda en el núcleo (38)
+                    } else if (scrollProgress >= 0.57 && scrollProgress < 0.71) {
+                        // Hold y Revolución: se queda en el núcleo (38)
                         targetZ = 38;
-                    } else if (scrollProgress >= 0.63 && scrollProgress < 0.69) {
+                    } else if (scrollProgress >= 0.71 && scrollProgress < 0.77) {
                         // Desarmándose: zoom out diferido hacia 125 (lejos)
-                        if (scrollProgress < 0.66) {
+                        if (scrollProgress < 0.74) {
                             targetZ = 38; // Se queda en el núcleo inicialmente
                         } else {
-                            zoomFactor = (scrollProgress - 0.66) / 0.03;
+                            zoomFactor = (scrollProgress - 0.74) / 0.03;
                             targetZ = 38 + (zoomFactor * 87); // Se aleja rápidamente al final
                         }
                     }

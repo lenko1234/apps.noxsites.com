@@ -75,15 +75,8 @@
                     </div>
                 </div>
 
-                <div class="hero-visual fade-in" style="animation-delay: 0.2s;">
-                    <div class="phone-mockup">
-                        <img src="/nox_catalog.png" alt="Nox Catalog Mockup"
-                            style="width: 100%; height: 100%; object-fit: cover;">
-                    </div>
-                    <div class="phone-mockup secondary">
-                        <img src="/nox_catalog.png" alt="Nox Catalog Mockup Secondary"
-                            style="width: 100%; height: 100%; object-fit: cover;">
-                    </div>
+                <div class="hero-visual" style="animation-delay: 0.2s;">
+                    <div class="canvas-container" id="heroCanvasContainer"></div>
                 </div>
             </div>
         </section>
@@ -294,7 +287,7 @@
         </section>
 
         <!-- CTA Final -->
-        <section class="final-cta"
+        <section class="final-cta fade-in"
             style="padding: 6rem 0; background: linear-gradient(to bottom, #0a0a0a 0%, var(--bg-dark) 20%, var(--primary-dark) 100%); text-align: center;">
             <canvas class="nexus-canvas"></canvas>
             <div class="container">
@@ -337,6 +330,7 @@
 
     <script type="module" src="/main.js"></script>
     <script type="module" src="/nexus.js"></script>
+    <script type="module" src="/hero-abstract.js"></script>
     <script>
         // Initialize Lucide Icons
         lucide.createIcons();

@@ -95,14 +95,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.querySelectorAll('.price-card').forEach(el => priceObserver.observe(el));
 
-    const heroVisual = document.querySelector('.hero-visual');
-    if (heroVisual) {
-        document.addEventListener('mousemove', (e) => {
-            const x = (window.innerWidth / 2 - e.pageX) / 40;
-            const y = (window.innerHeight / 2 - e.pageY) / 40;
-            heroVisual.style.transform = `translateX(${x}px) translateY(${y}px)`;
-        });
-    }
+
 
     const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
     const navLinks = document.querySelector('.nav-links');

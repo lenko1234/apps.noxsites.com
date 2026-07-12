@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NOX | High-Impact Catalog Systems and Landing Pages</title>
     <meta name="description"
-        content="We transform your business with digital catalog systems and landing pages designed to convert. Premium aesthetics, speed, and results.">
+        content="Digital catalog systems and landing pages designed to convert. Premium aesthetics, speed, and results.">
 
     <!-- Open Graph -->
     <meta property="og:title" content="NOX | Catalog Systems and Landing Pages">
@@ -60,29 +60,22 @@
             <div class="container">
                 <div class="hero-content fade-in">
                     <span class="hero-badge">Digital Conversion Experts</span>
-                    <h1>Catalog Systems for<br><span id="typewriter-text" style="color: var(--primary);"
+                    <h1>Your business deserves<br><span id="typewriter-text" style="color: var(--primary);"
                             data-phrases='["high impact", "premium aesthetics", "real conversion", "pure design"]'></span>
                     </h1>
-                    <p>We power agencies and businesses with premium-design digital tools engineered to increase sales
+                    <p>Powering agencies and businesses with premium-design digital tools engineered to increase sales
                         and automate&nbsp;processes.</p>
                     <div class="hero-ctas">
                         <a href="#precios" class="btn btn-primary">View Solutions</a>
                         <a href="/portfolio/" class="btn btn-outline" id="portfolio-btn">
                             <canvas id="boids-canvas"></canvas>
-                            <span style="position: relative; z-index: 2;">View our Portfolio</span>
+                            <span style="position: relative; z-index: 2;">View Portfolio</span>
                         </a>
                     </div>
                 </div>
 
-                <div class="hero-visual fade-in" style="animation-delay: 0.2s;">
-                    <div class="phone-mockup">
-                        <img src="/nox_catalog.png" alt="Nox Catalog Mockup"
-                            style="width: 100%; height: 100%; object-fit: cover;">
-                    </div>
-                    <div class="phone-mockup secondary">
-                        <img src="/nox_catalog.png" alt="Nox Catalog Mockup Secondary"
-                            style="width: 100%; height: 100%; object-fit: cover;">
-                    </div>
+                <div class="hero-visual" style="animation-delay: 0.2s;">
+                    <div class="canvas-container" id="heroCanvasContainer"></div>
                 </div>
             </div>
         </section>
@@ -92,7 +85,7 @@
             <div class="container text-center">
                 <p
                     style="text-align: center; margin-bottom: 2rem; color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.1em;">
-                    Brands that trust our technology</p>
+                    Brands trusting this technology</p>
                 <div class="logos-wrapper">
                     <div class="brand-item">
                         <div class="logo-container">
@@ -155,8 +148,7 @@
 
                     <div class="comp-card solution fade-in" style="animation-delay: 0.2s;">
                         <h3><i data-lucide="smile" style="color: var(--primary);"></i> The NOX Solution</h3>
-                        <p style="color: var(--text-muted); margin-bottom: 2rem;">We automate your catalog so you only
-                            worry about shipping.</p>
+                        <p style="color: var(--text-muted); margin-bottom: 2rem;">Catalog automation to focus solely on shipping.</p>
                         <ul>
                             <li><i data-lucide="check-circle" style="color: var(--primary);"></i> Ultra-fast and
                                 responsive web catalog.</li>
@@ -282,14 +274,14 @@
         </section>
 
         <!-- Final CTA -->
-        <section class="final-cta"
+        <section class="final-cta fade-in"
             style="padding: 6rem 0; background: linear-gradient(to bottom, #0a0a0a 0%, var(--bg-dark) 20%, var(--primary-dark) 100%); text-align: center;">
             <canvas class="nexus-canvas"></canvas>
             <div class="container">
                 <h2 style="font-size: 3rem; margin-bottom: 1.5rem;">Ready for the next step?</h2>
                 <p style="margin-bottom: 3rem; opacity: 0.8; max-width: 600px; margin-left: auto; margin-right: auto;">
                     Join the businesses already transforming the way they sell with NOX.</p>
-                <a href="https://wa.me/5493442653918?text=Hi%20NOX!%20I%20would%20like%20to%20start%20a%20project%20with%20you%20and%20chat%20about%20it."
+                <a href="https://wa.me/5493442653918?text=Hi"
                     class="btn btn-primary" style="padding: 1rem 3rem; font-size: 1.2rem;">Let's talk on WhatsApp</a>
             </div>
         </section>
@@ -301,10 +293,10 @@
             <!-- CTA to Particles Experience -->
             <div
                 style="border-top: 1px solid rgba(255, 255, 255, 0.05); border-bottom: 1px solid rgba(255, 255, 255, 0.05); padding: 3rem 0; margin: 2rem 0; text-align: center;">
-                <h3 style="font-size: 1.5rem; margin-bottom: 1rem; color: var(--primary);">Experience Our Vision</h3>
+                <h3 style="font-size: 1.5rem; margin-bottom: 1rem; color: var(--primary);">Experience The Vision</h3>
                 <p
                     style="color: var(--text-muted); margin-bottom: 2rem; max-width: 500px; margin-left: auto; margin-right: auto;">
-                    Discover how we transform concepts into immersive visual experiences
+                    Discover the transformation of concepts into immersive visual experiences
                 </p>
                 <a href="/particulas.html" class="btn btn-primary"
                     style="display: inline-flex; align-items: center; gap: 0.5rem;">
@@ -323,6 +315,7 @@
 
     <script type="module" src="/main.js"></script>
     <script type="module" src="/nexus.js"></script>
+    <script type="module" src="/hero-abstract.js"></script>
     <script>
         // Initialize Lucide Icons
         lucide.createIcons();
