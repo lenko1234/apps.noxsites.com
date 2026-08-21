@@ -1,0 +1,1253 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TIENDA 3D</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Three.js CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts Inter & Plus Jakarta Sans -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800;900&display=swap"
+        rel="stylesheet">
+
+    <style>
+        * {
+            box-sizing: border-box;
+            user-select: none;
+        }
+
+        body,
+        html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            background-color: #000000;
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            color: #ffffff;
+            scroll-behavior: smooth;
+            overflow-x: hidden;
+            scroll-snap-type: y mandatory;
+        }
+
+        #webgl-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 0;
+            outline: none;
+            pointer-events: none;
+        }
+
+        /* Minimalist Glassmorphism overlay */
+        .glass-nav {
+            background: transparent;
+            backdrop-filter: none;
+            -webkit-backdrop-filter: none;
+            border-bottom: none;
+        }
+
+        .glass-card {
+            background: rgba(12, 12, 22, 0.6);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+        }
+
+        .text-glow {
+            text-shadow: 0 4px 20px rgba(0, 0, 0, 0.95), 0 0 30px rgba(0, 0, 0, 0.9), 0 0 50px rgba(0, 0, 0, 0.8);
+        }
+
+        /* Fixed Central Story Text Container (Locked Height against Mobile Address Bar Shifts) */
+        #story-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: var(--app-height, 100vh);
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        /* Fixed Central Story Text Blur In / Blur Out (Zero Motion) */
+        .story-step {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 90%;
+            max-width: 48rem;
+            text-align: center;
+            opacity: 0;
+            filter: blur(30px);
+            transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+                filter 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+            pointer-events: none !important;
+            visibility: hidden;
+            z-index: 1;
+            will-change: opacity, filter;
+        }
+
+        .story-step * {
+            pointer-events: none !important;
+        }
+
+        .story-step h1,
+        .story-step h2 {
+            text-shadow: 0 4px 25px rgba(0, 0, 0, 0.98), 0 2px 10px rgba(0, 0, 0, 0.95), 0 0 40px rgba(0, 0, 0, 0.9);
+        }
+
+        .story-step p {
+            text-shadow: 0 4px 20px #000000, 0 2px 10px #000000, 0 0 40px #000000, 0 0 10px #000000, 1px 1px 2px #000000;
+            color: #ffffff;
+            font-weight: 600;
+        }
+
+        .story-step.active {
+            opacity: 1;
+            filter: blur(0px);
+            pointer-events: auto !important;
+            visibility: visible;
+            z-index: 20;
+        }
+
+        .story-step.active * {
+            pointer-events: auto !important;
+        }
+
+        .story-step.exit {
+            opacity: 0;
+            filter: blur(30px);
+            pointer-events: none !important;
+            visibility: hidden;
+            z-index: 1;
+        }
+
+        .text-accent {
+            color: #008000;
+        }
+
+        /* 3D Header Logo G-Code Toolpath Drawing on Exact Typography */
+        .logo-3d-svg {
+            display: inline-block;
+            vertical-align: middle;
+            overflow: visible;
+            filter: drop-shadow(0 2px 8px rgba(0, 128, 0, 0.4));
+        }
+
+        .logo-3d-svg .base-text {
+            fill: #008000;
+            transition: fill 0.3s ease;
+        }
+
+        .logo-3d-svg .char-3 {
+            stroke-dasharray: 160;
+            stroke-dashoffset: 160;
+            opacity: 0;
+            filter: drop-shadow(0 0 6px #00ff66) drop-shadow(0 0 14px #008000);
+        }
+
+        .logo-3d-svg .char-d {
+            stroke-dasharray: 170;
+            stroke-dashoffset: 170;
+            opacity: 0;
+            filter: drop-shadow(0 0 6px #00ff66) drop-shadow(0 0 14px #008000);
+        }
+
+        /* Sequential Toolpath Print: 2.2s for letter 3, and letter D begins at 2.0s */
+        .logo-3d-svg.catalog-mode .char-3 {
+            opacity: 1;
+            animation: drawChar3 2.2s linear forwards;
+        }
+
+        .logo-3d-svg.catalog-mode .char-d {
+            opacity: 1;
+            animation: drawCharD 2.2s linear 2.0s forwards;
+        }
+
+        @keyframes drawChar3 {
+            0% {
+                stroke-dashoffset: 160;
+                fill: transparent;
+            }
+            90% {
+                fill: transparent;
+            }
+            100% {
+                stroke-dashoffset: 0;
+                fill: rgba(0, 255, 102, 0.35);
+            }
+        }
+
+        @keyframes drawCharD {
+            0% {
+                stroke-dashoffset: 170;
+                fill: transparent;
+            }
+            90% {
+                fill: transparent;
+            }
+            100% {
+                stroke-dashoffset: 0;
+                fill: rgba(0, 255, 102, 0.35);
+            }
+        }
+
+        .story-section {
+            scroll-snap-align: start;
+            scroll-snap-stop: always;
+            min-height: 100vh;
+            min-height: var(--app-height, 100vh);
+        }
+
+        /* Catalog Transitions and Pure Black Theme (Hardware-Accelerated Smooth Fade/Blur) */
+        #catalog-view {
+            opacity: 0;
+            filter: blur(12px);
+            pointer-events: none;
+            transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), filter 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+            will-change: opacity, filter;
+            transform: translateZ(0);
+            backface-visibility: hidden;
+        }
+
+        #catalog-view.active {
+            opacity: 1;
+            filter: blur(0px);
+            pointer-events: auto;
+        }
+
+        .category-pill {
+            transition: all 0.25s ease;
+        }
+
+        .category-pill.active {
+            background-color: #008000;
+            color: #ffffff;
+            box-shadow: 0 4px 18px rgba(0, 128, 0, 0.45);
+            border-color: #008000;
+        }
+
+        .product-card {
+            background: #0a0a0a;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .product-card:hover {
+            transform: translateY(-6px);
+            border-color: rgba(0, 128, 0, 0.6);
+            box-shadow: 0 16px 36px -10px rgba(0, 128, 0, 0.3);
+        }
+
+        .product-img {
+            transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .product-card:hover .product-img {
+            transform: scale(1.06);
+        }
+
+        /* Modal styling */
+        .modal-backdrop {
+            background: rgba(0, 0, 0, 0.92);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+        }
+
+        .color-dot.active {
+            box-shadow: 0 0 0 2px #008000;
+            outline: 2px solid #ffffff;
+            outline-offset: 2px;
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #000000;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #008000;
+        }
+    </style>
+</head>
+
+<body class="relative min-h-screen bg-black text-white">
+
+    <!-- 3D Canvas Layer -->
+    <canvas id="webgl-canvas"></canvas>
+
+    <!-- Top Navbar (100% Transparent, Clean Layout) -->
+    <header id="main-header"
+        class="fixed top-0 left-0 w-full z-30 px-6 py-5 md:px-10 flex items-center justify-between pointer-events-auto bg-transparent border-0 transition-all duration-300">
+        <!-- Brand Logo -->
+        <a href="javascript:void(0)" onclick="navigateTo('landing')" class="group inline-flex items-center gap-2">
+            <span class="font-extrabold text-2xl tracking-wider text-white uppercase drop-shadow-md">NOX</span>
+            <svg id="logo-3d-svg" class="logo-3d-svg" width="52" height="34" viewBox="0 0 52 34">
+                <!-- Base text in exact original Plus Jakarta Sans font -->
+                <text x="0" y="27" class="base-text" font-family="'Plus Jakarta Sans', sans-serif" font-size="33" font-weight="800">3D</text>
+
+                <!-- Animated printed stroke layer in exact original Plus Jakarta Sans font -->
+                <text x="0" y="27" class="print-char char-3" font-family="'Plus Jakarta Sans', sans-serif" font-size="33" font-weight="800" fill="none" stroke="#00ff66" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round">3</text>
+                <text x="23" y="27" class="print-char char-d" font-family="'Plus Jakarta Sans', sans-serif" font-size="33" font-weight="800" fill="none" stroke="#00ff66" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round">D</text>
+            </svg>
+        </a>
+
+        <!-- Navigation Links -->
+        <nav class="flex items-center gap-6 md:gap-8 font-medium text-sm text-slate-300/90 tracking-wide">
+            <button onclick="navigateTo('landing')" id="nav-btn-landing"
+                class="hover:text-white transition-colors duration-200 text-white font-bold flex items-center gap-1.5">
+                <i class="fa-solid fa-house text-xs opacity-70"></i>
+                <span>Inicio</span>
+            </button>
+            <button onclick="navigateTo('catalog')" id="nav-btn-catalog"
+                class="hover:text-white transition-colors duration-200 text-slate-300 flex items-center gap-1.5">
+                <i class="fa-solid fa-store text-xs opacity-70"></i>
+                <span>Catálogo</span>
+            </button>
+        </nav>
+    </header>
+
+    <!-- Fixed Central Story Text Container (Stationary In-Place Blur In/Out) -->
+    <div id="story-container" class="transition-opacity duration-500">
+        <!-- Step 0: Hero -->
+        <div id="story-step-0" class="story-step active space-y-5">
+            <h1
+                class="text-4xl md:text-6xl lg:text-7xl font-black tracking-tight text-white text-glow leading-none uppercase">
+                MATERIALIZAMOS TU VISIÓN. <span class="text-accent">EN 3D.</span>
+            </h1>
+            <p class="text-sm md:text-base text-slate-200/90 font-light tracking-wide max-w-lg mx-auto">
+                Dale forma física a tus ideas. Explorá nuestros diseños o envíanos tu propio modelo. Nosotros lo hacemos
+                realidad.
+            </p>
+            <div class="pt-3 flex justify-center">
+                <button onclick="navigateTo('catalog')"
+                    class="bg-[#008000] hover:bg-[#006600] text-white font-bold text-sm px-8 py-3.5 rounded-xl transition-all shadow-lg shadow-[#008000]/30 flex items-center gap-2">
+                    <span>Explorar catálogo</span>
+                    <i class="fa-solid fa-arrow-right text-xs"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Step 1: Catálogo -->
+        <div id="story-step-1" class="story-step space-y-5">
+            <h2
+                class="text-4xl md:text-6xl lg:text-7xl font-black tracking-tight text-white text-glow leading-none uppercase">
+                DISEÑOS QUE YA ESTÁN <span class="text-accent">LISTOS.</span>
+            </h2>
+            <p class="text-sm md:text-base text-slate-200/90 font-light tracking-wide max-w-lg mx-auto">
+                Elegí el
+                modelo, seleccioná el color y recibilo directamente en tu casa.
+            </p>
+            <div class="pt-3 flex justify-center">
+                <button onclick="navigateTo('catalog')"
+                    class="bg-[#008000] hover:bg-[#006600] text-white font-bold text-xs px-6 py-3 rounded-xl transition-all shadow-lg shadow-[#008000]/30 flex items-center gap-2">
+                    <span>Ver productos</span>
+                    <i class="fa-solid fa-store text-xs"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Step 2: Pedido Personalizado -->
+        <div id="story-step-2" class="story-step space-y-5">
+            <h2
+                class="text-4xl md:text-6xl lg:text-7xl font-black tracking-tight text-white text-glow leading-none uppercase">
+                ¿TENÉS UNA IDEA? <span class="text-accent">LA FABRICAMOS.</span>
+            </h2>
+            <p class="text-sm md:text-base text-slate-200/90 font-light tracking-wide max-w-lg mx-auto">
+                Mandanos tu archivo STL o incluso una referencia de lo que querés crear. Analizamos tu
+                proyecto y te enviamos un presupuesto.
+            </p>
+            <div class="pt-3 flex justify-center">
+                <a href="https://api.whatsapp.com/send/?phone=5491100000000&text=Hola%20Nox%203D,%20tengo%20un%20modelo%20STL%20para%20cotizar"
+                    target="_blank"
+                    class="glass-card hover:bg-[#008000] text-white font-bold text-xs px-6 py-3 rounded-xl transition-all flex items-center gap-2 border-[#008000]/40">
+                    <i class="fa-solid fa-cloud-arrow-up text-accent"></i>
+                    <span>Enviar mi modelo</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scroll Height Drivers (Triggers for Landing - 3 Steps) -->
+    <main id="ui-container" class="relative z-0 w-full">
+        <section class="story-section min-h-screen" data-step="0"></section>
+        <section class="story-section min-h-screen" data-step="1"></section>
+        <section class="story-section min-h-screen" data-step="2"></section>
+    </main>
+
+    <!-- CATALOG VIEW SECTION (Revealed after the 3D Black Wave) -->
+    <section id="catalog-view" class="fixed inset-0 z-20 overflow-y-auto pt-24 pb-20 px-4 md:px-12 bg-black">
+        <div class="max-w-7xl mx-auto">
+
+            <!-- Filter Categories & Search Bar -->
+            <div class="flex flex-col lg:flex-row items-center justify-between gap-4 mb-8">
+                <!-- Category Tabs -->
+                <div class="flex flex-wrap items-center gap-2 w-full lg:w-auto">
+                    <button onclick="filterCategory('todos')"
+                        class="category-pill active text-xs font-semibold px-4 py-2 rounded-xl border border-white/15 bg-white/5 text-slate-300 hover:text-white"
+                        data-cat="todos">
+                        Todos
+                    </button>
+                    <button onclick="filterCategory('deco')"
+                        class="category-pill text-xs font-semibold px-4 py-2 rounded-xl border border-white/15 bg-white/5 text-slate-300 hover:text-white"
+                        data-cat="deco">
+                        <i class="fa-solid fa-leaf text-emerald-400 mr-1.5"></i>Decoración
+                    </button>
+                    <button onclick="filterCategory('fidgets')"
+                        class="category-pill text-xs font-semibold px-4 py-2 rounded-xl border border-white/15 bg-white/5 text-slate-300 hover:text-white"
+                        data-cat="fidgets">
+                        <i class="fa-solid fa-hand-sparkles text-indigo-400 mr-1.5"></i>Fidgets & EDC
+                    </button>
+                    <button onclick="filterCategory('articulados')"
+                        class="category-pill text-xs font-semibold px-4 py-2 rounded-xl border border-white/15 bg-white/5 text-slate-300 hover:text-white"
+                        data-cat="articulados">
+                        <i class="fa-solid fa-cube text-amber-400 mr-1.5"></i>Articulados
+                    </button>
+                    <button onclick="filterCategory('souvenirs')"
+                        class="category-pill text-xs font-semibold px-4 py-2 rounded-xl border border-white/15 bg-white/5 text-slate-300 hover:text-white"
+                        data-cat="souvenirs">
+                        <i class="fa-solid fa-gift text-rose-400 mr-1.5"></i>Souvenirs & Kits
+                    </button>
+                    <button onclick="filterCategory('custom')"
+                        class="category-pill text-xs font-semibold px-4 py-2 rounded-xl border border-white/15 bg-white/5 text-slate-300 hover:text-white"
+                        data-cat="custom">
+                        <i class="fa-solid fa-wand-magic-sparkles text-cyan-400 mr-1.5"></i>Personalizados
+                    </button>
+                </div>
+
+                <!-- Search Input -->
+                <div class="relative w-full lg:w-72">
+                    <i
+                        class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                    <input type="text" id="catalog-search" oninput="handleSearch(this.value)"
+                        placeholder="Buscar producto, lámpara, soporte..."
+                        class="w-full bg-[#111111] border border-white/10 rounded-xl pl-9 pr-4 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-[#008000] focus:ring-1 focus:ring-[#008000] transition-all">
+                </div>
+            </div>
+
+            <!-- Product Grid -->
+            <div id="product-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                <!-- Dynamically populated via JS -->
+            </div>
+
+            <!-- Custom STL Banner in Catalog -->
+            <div
+                class="mt-14 p-8 rounded-2xl border border-white/10 bg-gradient-to-r from-emerald-950/40 via-[#111111] to-black flex flex-col md:flex-row items-center justify-between gap-6 shadow-xl">
+                <div class="space-y-2 text-center md:text-left">
+                    <div class="inline-flex items-center gap-2 text-accent text-xs font-bold uppercase tracking-wider">
+                        <i class="fa-solid fa-microchip"></i>
+                        Fabricación a Medida
+                    </div>
+                    <h3 class="text-2xl font-bold text-white">¿Tenés un archivo 3D de Thingiverse o Printables?</h3>
+                    <p class="text-sm text-slate-300 max-w-xl">
+                        Envianos el link o tu archivo STL/OBJ y te presupuestamos la impresión en minutos con el
+                        material exacto que necesitás.
+                    </p>
+                </div>
+                <a href="https://api.whatsapp.com/send/?phone=5491100000000&text=Hola%20Nox%203D,%20tengo%20un%20archivo%203D%20para%20cotizar"
+                    target="_blank"
+                    class="bg-[#008000] hover:bg-[#006600] text-white font-bold text-xs px-6 py-3.5 rounded-xl transition-all shadow-lg shadow-[#008000]/30 whitespace-nowrap flex items-center gap-2">
+                    <i class="fa-solid fa-upload text-sm"></i>
+                    <span>Cotizar mi archivo</span>
+                </a>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- Quick View / Product Detail Modal -->
+    <div id="product-modal" class="fixed inset-0 z-50 modal-backdrop hidden flex items-center justify-center p-4">
+        <div
+            class="relative w-full max-w-2xl bg-[#0a0a0a] border border-white/15 rounded-2xl overflow-hidden shadow-2xl animate-in fade-in zoom-in duration-200">
+            <!-- Close button -->
+            <button onclick="closeModal()"
+                class="absolute top-4 right-4 z-10 w-9 h-9 rounded-full bg-black/60 hover:bg-black/90 text-white flex items-center justify-center transition-colors border border-white/10">
+                <i class="fa-solid fa-xmark text-sm"></i>
+            </button>
+
+            <div class="grid grid-cols-1 md:grid-cols-2">
+                <!-- Image view -->
+                <div
+                    class="relative bg-[#050505] h-64 md:h-full min-h-[260px] flex items-center justify-center overflow-hidden border-b md:border-b-0 md:border-r border-white/10">
+                    <img id="modal-img" src="" alt="Producto 3D" class="w-full h-full object-cover">
+                    <div id="modal-badge"
+                        class="absolute top-3 left-3 bg-[#008000]/80 backdrop-blur-md text-white text-[10px] font-bold px-2.5 py-1 rounded-md uppercase tracking-wider">
+                        FDM Pro
+                    </div>
+                </div>
+
+                <!-- Info Column -->
+                <div class="p-6 md:p-8 flex flex-col justify-between space-y-5">
+                    <div>
+                        <span id="modal-cat"
+                            class="text-[11px] font-bold text-accent tracking-wider uppercase">Categoría</span>
+                        <h3 id="modal-title" class="text-2xl font-black text-white mt-1 uppercase">Nombre del Producto
+                        </h3>
+                        <p id="modal-desc" class="text-xs text-slate-300 mt-2 leading-relaxed">Descripción detallada del
+                            modelo.</p>
+
+                        <!-- Specs -->
+                        <div class="mt-4 pt-4 border-t border-white/10 grid grid-cols-2 gap-2.5 text-[11px]">
+                            <div class="bg-white/5 p-2 rounded-lg">
+                                <span class="text-slate-400 block">Material:</span>
+                                <span id="modal-mat" class="font-bold text-white">PLA+ Premium</span>
+                            </div>
+                            <div class="bg-white/5 p-2 rounded-lg">
+                                <span class="text-slate-400 block">Dimensiones:</span>
+                                <span id="modal-dim" class="font-bold text-white">18 x 12 x 15 cm</span>
+                            </div>
+                        </div>
+
+                        <!-- Available Colors -->
+                        <div class="mt-4">
+                            <label class="text-[11px] text-slate-400 block mb-2 font-medium">Colores
+                                disponibles:</label>
+                            <div class="flex items-center gap-2" id="modal-colors">
+                                <button class="w-5 h-5 rounded-full bg-black border border-white/40 color-dot active"
+                                    title="Negro Carbón" onclick="selectColor(this, 'Negro Carbón')"></button>
+                                <button class="w-5 h-5 rounded-full bg-white border border-white/40 color-dot"
+                                    title="Blanco Nieve" onclick="selectColor(this, 'Blanco Nieve')"></button>
+                                <button class="w-5 h-5 rounded-full bg-[#008000] border border-white/40 color-dot"
+                                    title="Verde Esmeralda" onclick="selectColor(this, 'Verde Esmeralda')"></button>
+                                <button class="w-5 h-5 rounded-full bg-[#d97706] border border-white/40 color-dot"
+                                    title="Oro Seda" onclick="selectColor(this, 'Oro Seda')"></button>
+                                <button class="w-5 h-5 rounded-full bg-[#0284c7] border border-white/40 color-dot"
+                                    title="Azul Cobalto" onclick="selectColor(this, 'Azul Cobalto')"></button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Price & Buy Actions -->
+                    <div class="pt-4 border-t border-white/10 flex items-center justify-between gap-3">
+                        <div>
+                            <span class="text-[10px] text-slate-400 uppercase block">Precio</span>
+                            <div id="modal-price" class="text-xl font-black text-white">$ 16.500</div>
+                            <span class="text-[10px] text-accent font-semibold">3 cuotas sin interés</span>
+                        </div>
+
+                        <a id="modal-whatsapp-btn" href="#" target="_blank"
+                            class="bg-[#008000] hover:bg-[#006600] text-white font-bold text-xs px-5 py-3 rounded-xl transition-all shadow-lg shadow-[#008000]/30 flex items-center gap-2">
+                            <i class="fa-brands fa-whatsapp text-sm"></i>
+                            <span>Pedir Ahora</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Fixed Footer Bar -->
+    <footer id="main-footer"
+        class="fixed bottom-0 left-0 w-full z-20 px-6 py-4 md:px-10 flex items-center justify-between pointer-events-none text-xs text-slate-400/80 transition-opacity duration-300">
+        <div id="scroll-indicator" class="flex items-center gap-4">
+            <span><i class="fa-solid fa-arrows-up-down text-accent mr-1.5"></i>Deslizá para explorar</span>
+        </div>
+    </footer>
+
+    <script>
+        // --- Catalog Products Database ---
+        const catalogProducts = [
+            {
+                id: 1,
+                title: "Cono Helicoidal Vóxel",
+                category: "deco",
+                catName: "Decoración",
+                price: "$ 7.000",
+                priceNum: 7000,
+                badge: "Silk Bicolor",
+                material: "PLA Silk Oro & Plata",
+                dimensions: "18 x 10 x 10 cm",
+                desc: "Escultura cinética de doble hélice espiral pasante con acabado sedoso en dos tonos. Ideal para escritorios y coleccionistas.",
+                img: "assets/espiral-vortex.jpg"
+            },
+            {
+                id: 2,
+                title: "Tarjeta Háptica EDC Fidget",
+                category: "fidgets",
+                catName: "Fidgets & EDC",
+                price: "$ 8.900",
+                priceNum: 8900,
+                badge: "Multifunción",
+                material: "PETG / PLA HD Resistente",
+                dimensions: "9 x 5.5 x 0.8 cm",
+                desc: "Gadget táctil antiestrés para llevar en el bolsillo. Integra giroscopio concéntrico rotatorio, switch deslizante y pulsadores hápticos.",
+                img: "assets/edc-fidget-card.jpg"
+            },
+            {
+                id: 3,
+                title: "Infinity Cube Articulado",
+                category: "articulados",
+                catName: "Articulados",
+                price: "$ 7.500",
+                priceNum: 7500,
+                badge: "Print-In-Place",
+                material: "PLA de Alto Impacto",
+                dimensions: "8 cubos de 20 mm articulados",
+                desc: "Cubo infinito con bisagras mecánicas impresas en una sola pieza sin ensambles. Movimiento perpetuo fluido y antiestrés.",
+                img: "assets/infinity-cube.jpg"
+            },
+            {
+                id: 4,
+                title: "Kit Souvenir Minecraft 3D para Pintar",
+                category: "souvenirs",
+                catName: "Souvenirs & Kits",
+                price: "$ 5.800",
+                priceNum: 5800,
+                badge: "Kit Completo",
+                material: "PLA Blanco Mate + Pinturas + Pincel",
+                dimensions: "Logo 15 cm + Vasitos + Pincel + Diploma",
+                desc: "Kit creativo para cumpleaños y eventos temáticos. Incluye logo 3D de Minecraft en relieve, set de acrílicos, pincel y diploma de participación.",
+                img: "assets/kit-minecraft.jpg"
+            },
+            {
+                id: 5,
+                title: "Lámpara Voronoi Prisma",
+                category: "deco",
+                catName: "Decoración",
+                price: "$ 24.900",
+                priceNum: 24900,
+                badge: "Más Vendido",
+                material: "PLA Silk + Base Madera",
+                dimensions: "22 x 14 x 14 cm",
+                desc: "Iluminación ambiental de diseño paramétrico Voronoi. Genera patrones de sombras orgánicas que transforman dormitorios y livings.",
+                img: "https://images.unsplash.com/photo-1507473885765-e6ed057f782c?w=700&auto=format&fit=crop&q=80"
+            },
+            {
+                id: 6,
+                title: "Soporte Gamer para Auriculares",
+                category: "deco",
+                catName: "Decoración",
+                price: "$ 18.500",
+                priceNum: 18500,
+                badge: "PETG Ultra",
+                material: "PETG Alta Densidad",
+                dimensions: "25 x 15 x 12 cm",
+                desc: "Soporte ergonómico para auriculares con ranura organizadora de cable y base antideslizante con peso equilibrado.",
+                img: "https://images.unsplash.com/photo-1546435770-a3e426bf472b?w=700&auto=format&fit=crop&q=80"
+            },
+            {
+                id: 7,
+                title: "Maceta Low-Poly Dodecaedro",
+                category: "deco",
+                catName: "Decoración",
+                price: "$ 9.800",
+                priceNum: 9800,
+                badge: "Ecológico",
+                material: "PLA Biodegradable",
+                dimensions: "12 x 12 x 10 cm",
+                desc: "Maceta geométrica con facetas pulidas y sistema de drenaje interior ideal para suculentas y plantas de interior.",
+                img: "https://images.unsplash.com/photo-1485955900006-10f4d324d411?w=700&auto=format&fit=crop&q=80"
+            },
+            {
+                id: 8,
+                title: "Dragón Imperial Articulado",
+                category: "articulados",
+                catName: "Articulados",
+                price: "$ 19.200",
+                priceNum: 19200,
+                badge: "Print-In-Place",
+                material: "PLA Silk Bicolor",
+                dimensions: "45 cm de largo",
+                desc: "Impresión de alta precisión articulada en una sola pieza sin ensamblajes. Totalmente flexible y antiestrés.",
+                img: "https://images.unsplash.com/photo-1563089145-599997674d42?w=700&auto=format&fit=crop&q=80"
+            },
+            {
+                id: 9,
+                title: "Servicio de Impresión STL a Medida",
+                category: "custom",
+                catName: "Personalizados",
+                price: "A Cotizar",
+                priceNum: 0,
+                badge: "A Medida",
+                material: "PLA / PETG / TPU Flexible / Resina",
+                dimensions: "Hasta 25 x 25 x 25 cm",
+                desc: "¿Tenés un archivo 3D o repuesto que necesitás fabricar? Mandanos tu archivo y te lo cotizamos sin cargo.",
+                img: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=700&auto=format&fit=crop&q=80"
+            }
+        ];
+
+        // --- App Mode and Transition State ---
+        let appState = 'landing'; // 'landing' | 'to_catalog' | 'catalog' | 'to_landing'
+        let transitionProgress = 0.0; // 0.0 to 1.0
+        let selectedProductColor = "Negro Carbón";
+
+        // --- Three.js State ---
+        const config = {
+            gridX: 200,              // Wide grid X to cover screen corners
+            gridZ: 240,              // Deep grid Z extending high up top
+            spacing: 0.82,           // Voxel pitch spacing
+            voxelSize: 0.76,         // Cube size
+            baseHeight: 0.25,
+            maxHeight: 3.0,
+            waveSpeed: 1.2,
+            palette: 'sunset',
+            mode: 'ripple',
+            camMode: 'isometric'
+        };
+
+        // --- Color Palettes & Reusable Render Objects ---
+        const tempVoxelColor = new THREE.Color();
+        const staticBlackColor = new THREE.Color(0x000000);
+
+        let scene, camera, renderer, instancedMesh;
+        let dummy = new THREE.Object3D();
+        let pointLight, dirLight;
+        let lastTime = 0;
+        let waveAccumulator = 0;
+        let smoothScrollRatio = 0;
+
+        const camPositions = {
+            isometric: { pos: new THREE.Vector3(18, 22, 22), look: new THREE.Vector3(0, -1, 0) }
+        };
+
+        function initThree() {
+            const canvas = document.getElementById('webgl-canvas');
+
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x000000);
+            scene.fog = new THREE.FogExp2(0x000000, 0.005);
+
+            camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.copy(camPositions.isometric.pos);
+            camera.lookAt(camPositions.isometric.look);
+
+            renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, powerPreference: "high-performance" });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.65);
+            scene.add(ambientLight);
+
+            dirLight = new THREE.DirectionalLight(0xffffff, 1.1);
+            dirLight.position.set(25, 45, 20);
+            dirLight.castShadow = true;
+            scene.add(dirLight);
+
+            pointLight = new THREE.PointLight(0xf59e0b, 1.8, 70, 1.2);
+            pointLight.position.set(0, 16, 0);
+            scene.add(pointLight);
+
+            createVoxelGrid();
+            window.addEventListener('resize', onWindowResize);
+            animate(0);
+        }
+
+        function createVoxelGrid() {
+            if (instancedMesh) scene.remove(instancedMesh);
+
+            const totalCount = config.gridX * config.gridZ;
+            const geometry = new THREE.BoxGeometry(config.voxelSize, 1, config.voxelSize);
+            geometry.translate(0, 0.5, 0);
+
+            const material = new THREE.MeshStandardMaterial({
+                roughness: 0.55,
+                metalness: 0.08,
+            });
+
+            instancedMesh = new THREE.InstancedMesh(geometry, material, totalCount);
+            instancedMesh.castShadow = true;
+            instancedMesh.receiveShadow = true;
+            instancedMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+
+            scene.add(instancedMesh);
+        }
+
+        function animate(time) {
+            requestAnimationFrame(animate);
+
+            // When in catalog mode, sleep intensive 3D math to keep scrolling 100% fluid
+            if (appState === 'catalog' && transitionProgress >= 1.0) {
+                renderer.render(scene, camera);
+                return;
+            }
+
+            const delta = lastTime === 0 ? 0.016 : Math.min(0.1, (time - lastTime) * 0.001);
+            lastTime = time;
+
+            const isMobile = window.innerWidth < 768;
+            const transitionSpeed = isMobile ? 0.55 : 1.05;
+
+            // Handle transition state progression
+            if (appState === 'to_catalog') {
+                transitionProgress += delta * transitionSpeed;
+                // Start catalog blur-in earlier as the wave begins
+                const triggerThreshold = isMobile ? 0.20 : 0.25;
+                if (transitionProgress >= triggerThreshold && !document.getElementById('catalog-view').classList.contains('active')) {
+                    showCatalogUI();
+                }
+                if (transitionProgress >= 1.0) {
+                    transitionProgress = 1.0;
+                    appState = 'catalog';
+                }
+            } else if (appState === 'to_landing') {
+                transitionProgress -= delta * 1.5;
+                if (transitionProgress <= 0.0) {
+                    transitionProgress = 0.0;
+                    appState = 'landing';
+                    showLandingUI();
+                }
+            }
+
+            // Smooth scroll calculation for natural color transitions
+            const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+            const targetScrollRatio = maxScroll > 0 ? Math.min(1, Math.max(0, window.scrollY / maxScroll)) : 0;
+            smoothScrollRatio += (targetScrollRatio - smoothScrollRatio) * 0.05;
+
+            const speedFactor = Math.max(0.12, 1.0 - smoothScrollRatio * 0.88);
+            const currentSpeed = config.waveSpeed * speedFactor;
+
+            waveAccumulator += delta * currentSpeed;
+            const seconds = waveAccumulator;
+
+            // Dynamically match central point light color to the exact active wave/scroll color
+            const currentHue = Math.min(0.80, Math.max(0.08, 0.08 + smoothScrollRatio * 0.64 + Math.sin(seconds * 0.4) * 0.015));
+            pointLight.color.setHSL(currentHue, 0.95, 0.55);
+
+            // Dynamic transition lighting: luminous surge during wave expansion
+            if (transitionProgress > 0) {
+                // Energetic glow surge that travels with the wave
+                const surge = Math.sin(transitionProgress * Math.PI) * 4.2;
+                const fadeFactor = Math.max(0.0, 1.0 - Math.pow(transitionProgress, 1.8));
+                pointLight.intensity = Math.max(0.0, (1.8 + surge) * fadeFactor);
+                pointLight.distance = 70 + transitionProgress * 80;
+                pointLight.position.set(0, 16 + Math.sin(seconds * 1.5) * 1.0 + transitionProgress * 8.0, 0);
+
+                if (dirLight) dirLight.intensity = Math.max(0.0, 1.1 * (1.0 - transitionProgress));
+            } else {
+                pointLight.intensity = 1.8;
+                pointLight.distance = 70;
+                pointLight.position.set(0, 16 + Math.sin(seconds * 1.5) * 1.0, 0);
+                if (dirLight) dirLight.intensity = 1.1;
+            }
+
+            const offsetX = (config.gridX * config.spacing) / 2;
+            const offsetZ = (config.gridZ * config.spacing) / 2;
+            const maxRadius = Math.sqrt(offsetX * offsetX + offsetZ * offsetZ);
+
+            let idx = 0;
+
+            // Black wave parameters
+            const waveRadius = transitionProgress * maxRadius * 1.25;
+            const waveThickness = 14.0;
+
+            for (let x = 0; x < config.gridX; x++) {
+                const posX = x * config.spacing - offsetX;
+
+                for (let z = 0; z < config.gridZ; z++) {
+                    const posZ = z * config.spacing - offsetZ;
+                    const distFromCenter = Math.sqrt(posX * posX + posZ * posZ);
+
+                    // Physics base wave
+                    const idleWave = Math.sin(distFromCenter * 0.28 - seconds * 2.0) * 0.25 +
+                        Math.cos(posX * 0.15 + seconds) * 0.15;
+
+                    const rippleWave = Math.sin(distFromCenter * 0.7 - seconds * 4.5);
+                    const falloff = Math.exp(-distFromCenter * 0.18);
+                    const waveImpact = (rippleWave + 1.2) * falloff * 3.0;
+
+                    let baseVoxelHeight = config.baseHeight + Math.max(0, idleWave + waveImpact);
+                    baseVoxelHeight = Math.min(baseVoxelHeight, config.maxHeight);
+
+                    let finalHeight = baseVoxelHeight;
+
+                    // Compute sunset color in-place without memory allocation (subtly softer brightness)
+                    const heightRatio = baseVoxelHeight / config.maxHeight;
+                    const hue = 0.08 + smoothScrollRatio * 0.64 + (heightRatio * 0.1) + Math.sin(seconds * 0.4) * 0.015;
+                    const safeHue = Math.min(0.80, Math.max(0.08, hue));
+                    tempVoxelColor.setHSL(safeHue, 0.86, 0.13 + heightRatio * 0.42);
+
+                    // --- Black Wave Collapse Calculation ---
+                    if (transitionProgress > 0.001) {
+                        const distToWave = waveRadius - distFromCenter;
+
+                        if (distToWave <= 0) {
+                            // Ahead of the black wave: normal state
+                            finalHeight = baseVoxelHeight;
+                        } else if (distToWave < waveThickness) {
+                            // Inside the black wave crest: sharp impulse up, turning black
+                            const wavePhase = distToWave / waveThickness; // 0 to 1
+                            const crestImpulse = Math.sin(wavePhase * Math.PI) * 1.8;
+                            const collapseFactor = 1.0 - wavePhase;
+
+                            finalHeight = (baseVoxelHeight + crestImpulse) * collapseFactor;
+                            // Interpolate color to black
+                            tempVoxelColor.lerp(staticBlackColor, wavePhase);
+                        } else {
+                            // Behind the wave: completely collapsed to 0 and black
+                            finalHeight = 0.001;
+                            tempVoxelColor.copy(staticBlackColor);
+                        }
+                    }
+
+                    // Set instance matrix transform
+                    dummy.position.set(posX, 0, posZ);
+                    dummy.scale.set(1, Math.max(0.001, finalHeight), 1);
+                    dummy.updateMatrix();
+
+                    instancedMesh.setMatrixAt(idx, dummy.matrix);
+                    instancedMesh.setColorAt(idx, tempVoxelColor);
+
+                    idx++;
+                }
+            }
+
+            instancedMesh.instanceMatrix.needsUpdate = true;
+            if (instancedMesh.instanceColor) instancedMesh.instanceColor.needsUpdate = true;
+
+            renderer.render(scene, camera);
+        }
+
+        function updateAppHeight() {
+            document.documentElement.style.setProperty('--app-height', `${window.innerHeight}px`);
+        }
+        updateAppHeight();
+
+        let lastViewportWidth = window.innerWidth;
+
+        function onWindowResize() {
+            const currentWidth = window.innerWidth;
+            const isMobileDevice = currentWidth < 1024;
+
+            // Ignore height-only resizes on mobile caused by the address bar collapsing during scroll
+            if (isMobileDevice && Math.abs(currentWidth - lastViewportWidth) < 5) {
+                return;
+            }
+            lastViewportWidth = currentWidth;
+            updateAppHeight();
+
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        // --- Navigation Controller ---
+        function navigateTo(view) {
+            if (view === 'catalog' && (appState === 'landing' || appState === 'to_landing')) {
+                appState = 'to_catalog';
+                // Update nav highlights
+                document.getElementById('nav-btn-landing').classList.remove('text-white', 'font-bold');
+                document.getElementById('nav-btn-landing').classList.add('text-slate-300');
+                document.getElementById('nav-btn-catalog').classList.add('text-white', 'font-bold');
+                document.getElementById('nav-btn-catalog').classList.remove('text-slate-300');
+
+                // Fade out landing text container
+                const storyContainer = document.getElementById('story-container');
+                if (storyContainer) {
+                    storyContainer.style.opacity = '0';
+                    storyContainer.style.pointerEvents = 'none';
+                }
+
+                // Hide scroll helper
+                const scrollIndicator = document.getElementById('scroll-indicator');
+                if (scrollIndicator) scrollIndicator.style.opacity = '0';
+
+                // Scroll to top instantly without layout thrashing
+                window.scrollTo(0, 0);
+
+            } else if (view === 'landing' && (appState === 'catalog' || appState === 'to_catalog')) {
+                hideCatalogUI();
+                appState = 'to_landing';
+
+                // Update nav highlights
+                document.getElementById('nav-btn-catalog').classList.remove('text-white', 'font-bold');
+                document.getElementById('nav-btn-catalog').classList.add('text-slate-300');
+                document.getElementById('nav-btn-landing').classList.add('text-white', 'font-bold');
+                document.getElementById('nav-btn-landing').classList.remove('text-slate-300');
+            }
+        }
+
+        function showCatalogUI() {
+            const catalogView = document.getElementById('catalog-view');
+            if (catalogView) {
+                catalogView.classList.add('active');
+                catalogView.scrollTop = 0;
+            }
+            const header = document.getElementById('main-header');
+            if (header) {
+                header.style.transform = 'translateY(0)';
+                header.style.opacity = '1';
+            }
+            const logoSvg = document.getElementById('logo-3d-svg');
+            if (logoSvg) logoSvg.classList.add('catalog-mode');
+        }
+
+        function hideCatalogUI() {
+            const catalogView = document.getElementById('catalog-view');
+            if (catalogView) {
+                catalogView.classList.remove('active');
+            }
+            const header = document.getElementById('main-header');
+            if (header) {
+                header.style.transform = 'translateY(0)';
+                header.style.opacity = '1';
+            }
+            const logoSvg = document.getElementById('logo-3d-svg');
+            if (logoSvg) logoSvg.classList.remove('catalog-mode');
+        }
+
+        function showLandingUI() {
+            const storyContainer = document.getElementById('story-container');
+            if (storyContainer) {
+                storyContainer.style.opacity = '1';
+                storyContainer.style.pointerEvents = '';
+            }
+
+            const scrollIndicator = document.getElementById('scroll-indicator');
+            if (scrollIndicator) scrollIndicator.style.opacity = '1';
+        }
+
+        // --- Render Products in Grid ---
+        function renderProducts(products) {
+            const grid = document.getElementById('product-grid');
+            if (!grid) return;
+
+            if (products.length === 0) {
+                grid.innerHTML = `
+                    <div class="col-span-full py-16 text-center">
+                        <i class="fa-solid fa-box-open text-4xl text-slate-600 mb-3 block"></i>
+                        <p class="text-slate-400 text-sm">No encontramos productos con ese filtro.</p>
+                        <button onclick="filterCategory('todos')" class="mt-4 text-xs text-accent font-bold underline">Ver todos los productos</button>
+                    </div>
+                `;
+                return;
+            }
+
+            grid.innerHTML = products.map(p => `
+                <div class="product-card rounded-2xl overflow-hidden flex flex-col justify-between group">
+                    <div class="relative h-52 bg-[#080912] overflow-hidden">
+                        <img src="${p.img}" alt="${p.title}" decoding="async" loading="eager" class="w-full h-full object-cover product-img">
+                        <span class="absolute top-3 left-3 bg-[#05050b]/80 backdrop-blur-md border border-white/10 text-slate-200 text-[10px] font-bold px-2.5 py-1 rounded-md uppercase tracking-wider">
+                            ${p.badge}
+                        </span>
+                        <button onclick="openModal(${p.id})" class="absolute bottom-3 right-3 bg-white/10 hover:bg-white/25 backdrop-blur-md text-white text-xs p-2.5 rounded-xl transition-all border border-white/10 opacity-0 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0" title="Vista Rápida">
+                            <i class="fa-solid fa-expand"></i>
+                        </button>
+                    </div>
+
+                    <div class="p-5 flex-1 flex flex-col justify-between space-y-4">
+                        <div>
+                            <span class="text-[10px] font-bold uppercase tracking-wider text-accent">${p.catName}</span>
+                            <h3 class="text-base font-bold text-white mt-1 group-hover:text-emerald-400 transition-colors">${p.title}</h3>
+                            <p class="text-xs text-slate-400 mt-1.5 line-clamp-2">${p.desc}</p>
+                            
+                            <div class="mt-3 flex items-center gap-2 text-[10px] text-slate-400 font-medium">
+                                <span class="bg-white/5 px-2 py-0.5 rounded border border-white/5"><i class="fa-solid fa-cube text-accent mr-1"></i>${p.material.split('+')[0]}</span>
+                            </div>
+                        </div>
+
+                        <div class="pt-3 border-t border-white/10 flex items-center justify-between">
+                            <div>
+                                <span class="text-xs text-slate-400 font-normal">Precio</span>
+                                <div class="text-base font-black text-white">${p.price}</div>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <button onclick="openModal(${p.id})" class="glass-card hover:bg-white/10 text-white p-2.5 rounded-xl text-xs transition-all" title="Detalles">
+                                    <i class="fa-solid fa-eye"></i>
+                                </button>
+                                <a href="https://api.whatsapp.com/send/?phone=5491100000000&text=Hola%20Nox%203D,%20me%20interesa%20el%20producto:%20*${encodeURIComponent(p.title)}*" target="_blank"
+                                    class="bg-[#008000] hover:bg-[#006600] text-white p-2.5 px-3.5 rounded-xl text-xs font-bold transition-all shadow-md shadow-[#008000]/30 flex items-center gap-1.5">
+                                    <i class="fa-brands fa-whatsapp text-sm"></i>
+                                    <span>Pedir</span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // --- Filter & Search Handlers ---
+        let currentFilter = 'todos';
+        let currentSearch = '';
+
+        function filterCategory(cat) {
+            currentFilter = cat;
+            document.querySelectorAll('.category-pill').forEach(btn => {
+                if (btn.dataset.cat === cat) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+            applyFilters();
+        }
+
+        function handleSearch(val) {
+            currentSearch = val.toLowerCase().trim();
+            applyFilters();
+        }
+
+        function applyFilters() {
+            let list = catalogProducts;
+            if (currentFilter !== 'todos') {
+                list = list.filter(p => p.category === currentFilter);
+            }
+            if (currentSearch) {
+                list = list.filter(p =>
+                    p.title.toLowerCase().includes(currentSearch) ||
+                    p.desc.toLowerCase().includes(currentSearch) ||
+                    p.catName.toLowerCase().includes(currentSearch)
+                );
+            }
+            renderProducts(list);
+        }
+
+        // --- Modal Controller ---
+        function openModal(id) {
+            const product = catalogProducts.find(p => p.id === id);
+            if (!product) return;
+
+            document.getElementById('modal-img').src = product.img;
+            document.getElementById('modal-cat').textContent = product.catName;
+            document.getElementById('modal-title').textContent = product.title;
+            document.getElementById('modal-desc').textContent = product.desc;
+            document.getElementById('modal-mat').textContent = product.material;
+            document.getElementById('modal-dim').textContent = product.dimensions;
+            document.getElementById('modal-price').textContent = product.price;
+            document.getElementById('modal-badge').textContent = product.badge;
+
+            updateModalWhatsApp(product.title, selectedProductColor);
+
+            const modal = document.getElementById('product-modal');
+            modal.classList.remove('hidden');
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('product-modal');
+            modal.classList.add('hidden');
+        }
+
+        function selectColor(btn, colorName) {
+            selectedProductColor = colorName;
+            document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('active'));
+            btn.classList.add('active');
+            const title = document.getElementById('modal-title').textContent;
+            updateModalWhatsApp(title, colorName);
+        }
+
+        function updateModalWhatsApp(productTitle, color) {
+            const btn = document.getElementById('modal-whatsapp-btn');
+            if (!btn) return;
+            const msg = `Hola Nox 3D, me interesa pedir el producto: *${productTitle}* en color *${color}*. ¿Tienen stock o tiempo estimado de fabricación?`;
+            btn.href = `https://api.whatsapp.com/send/?phone=5491100000000&text=${encodeURIComponent(msg)}`;
+        }
+
+        // Close modal on click outside
+        window.addEventListener('click', (e) => {
+            const modal = document.getElementById('product-modal');
+            if (e.target === modal) {
+                closeModal();
+            }
+        });
+
+        // --- DOM Init and Scroll Story Observer ---
+        document.addEventListener('DOMContentLoaded', () => {
+            initThree();
+            renderProducts(catalogProducts); // Pre-render catalog products in advance
+
+            // Pre-warm and decode all product images to GPU memory in background
+            if ('decode' in Image.prototype) {
+                catalogProducts.forEach(p => {
+                    const img = new Image();
+                    img.src = p.img;
+                    img.decode().catch(() => { });
+                });
+            }
+
+            // Story observer for scroll
+            const storySections = document.querySelectorAll('.story-section');
+            const allSteps = document.querySelectorAll('.story-step');
+            const observerOptions = {
+                root: null,
+                threshold: 0.5
+            };
+
+            const observer = new IntersectionObserver((entries) => {
+                if (appState !== 'landing') return; // Do not toggle steps when inside catalog
+
+                entries.forEach(entry => {
+                    const stepIdx = entry.target.dataset.step;
+                    const targetStep = document.getElementById(`story-step-${stepIdx}`);
+                    if (!targetStep) return;
+
+                    if (entry.isIntersecting) {
+                        allSteps.forEach(s => {
+                            if (s === targetStep) {
+                                s.classList.remove('exit');
+                                s.classList.add('active');
+                            } else {
+                                s.classList.remove('active');
+                                s.classList.add('exit');
+                            }
+                        });
+                    }
+                });
+            }, observerOptions);
+
+            storySections.forEach(section => observer.observe(section));
+
+            // Strict 1-step Wheel Controller for Desktop / Trackpads
+            let isSnapping = false;
+            window.addEventListener('wheel', (e) => {
+                if (appState !== 'landing') return;
+
+                if (Math.abs(e.deltaY) > 15) {
+                    const sectionHeight = window.innerHeight;
+                    const currentScroll = window.scrollY;
+                    const currentStep = Math.round(currentScroll / sectionHeight);
+
+                    if (e.deltaY > 0 && currentStep < 2) {
+                        if (!isSnapping) {
+                            isSnapping = true;
+                            window.scrollTo({ top: (currentStep + 1) * sectionHeight, behavior: 'smooth' });
+                            setTimeout(() => { isSnapping = false; }, 550);
+                        }
+                        e.preventDefault();
+                    } else if (e.deltaY < 0 && currentStep > 0) {
+                        if (!isSnapping) {
+                            isSnapping = true;
+                            window.scrollTo({ top: (currentStep - 1) * sectionHeight, behavior: 'smooth' });
+                            setTimeout(() => { isSnapping = false; }, 550);
+                        }
+                        e.preventDefault();
+                    }
+                }
+            }, { passive: false });
+
+            // Auto-hide header when scrolling inside catalog so products have 100% clean view
+            const header = document.getElementById('main-header');
+            const catalogView = document.getElementById('catalog-view');
+            if (catalogView && header) {
+                catalogView.addEventListener('scroll', () => {
+                    if (catalogView.scrollTop > 35) {
+                        header.style.transform = 'translateY(-100%)';
+                        header.style.opacity = '0';
+                    } else {
+                        header.style.transform = 'translateY(0)';
+                        header.style.opacity = '1';
+                    }
+                }, { passive: true });
+            }
+        });
+    </script>
+</body>
+
+</html>

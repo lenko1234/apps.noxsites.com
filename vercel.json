@@ -13,6 +13,16 @@
             "source": "/es",
             "destination": "/portfolio/es/",
             "permanent": true
+        },
+        {
+            "source": "/3d",
+            "destination": "/3D",
+            "permanent": true
+        },
+        {
+            "source": "/3d/(.*)",
+            "destination": "/3D/$1",
+            "permanent": true
         }
     ],
     "rewrites": [

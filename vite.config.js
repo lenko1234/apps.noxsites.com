@@ -13,6 +13,7 @@ export default defineConfig({
                 portfolio_es: resolve(__dirname, 'portfolio/es/index.html'),
                 en: resolve(__dirname, 'en/index.html'),
                 bento_test: resolve(__dirname, 'bento-test.html'),
+                threed: resolve(__dirname, '3D/index.html'),
             },
         },
     },
