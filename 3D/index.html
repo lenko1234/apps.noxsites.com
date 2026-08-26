@@ -5,20 +5,39 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TIENDA 3D</title>
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Three.js CDN -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <!-- Font Awesome Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google Fonts Inter & Plus Jakarta Sans -->
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800;900&display=swap"
-        rel="stylesheet">
+    <meta name="description" content="Servicios de diseño e impresión 3D, prototipado y souvenirs personalizados.">
+
+    <!-- Preconnect origins -->
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <!-- Local compiled Tailwind CSS (no CDN JIT script overhead) -->
+    <link rel="stylesheet" href="./tailwind.css">
+    <!-- Three.js CDN (Deferred) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" defer></script>
+    <!-- Font Awesome Icons (Non-blocking) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"></noscript>
+    <!-- Google Fonts Inter & Plus Jakarta Sans with font-display: swap -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800;900&display=swap" rel="stylesheet">
 
     <style>
         * {
             box-sizing: border-box;
             user-select: none;
+        }
+
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border-width: 0;
         }
 
         body,
@@ -296,8 +315,8 @@
     <header id="main-header"
         class="fixed top-0 left-0 w-full z-30 px-6 py-5 md:px-10 flex items-center justify-between pointer-events-auto bg-transparent border-0 transition-all duration-300">
         <!-- Brand Logo -->
-        <a href="javascript:void(0)" onclick="navigateTo('landing')" class="group inline-flex items-center gap-2">
-            <span class="font-extrabold text-2xl tracking-wider text-white uppercase drop-shadow-md">NOX</span>
+        <a href="#inicio" onclick="navigateTo('landing'); return false;" class="group inline-flex items-center gap-2 text-left cursor-pointer no-underline shrink-0">
+            <span class="font-extrabold text-2xl tracking-wider text-white uppercase drop-shadow-md leading-none">NOX</span>
             <svg id="logo-3d-svg" class="logo-3d-svg" width="52" height="34" viewBox="0 0 52 34">
                 <!-- Base text in exact original Plus Jakarta Sans font -->
                 <text x="0" y="27" class="base-text" font-family="'Plus Jakarta Sans', sans-serif" font-size="33" font-weight="800">3D</text>
@@ -394,6 +413,7 @@
     <!-- CATALOG VIEW SECTION (Revealed after the 3D Black Wave) -->
     <section id="catalog-view" class="fixed inset-0 z-20 overflow-y-auto pt-24 pb-20 px-4 md:px-12 bg-black">
         <div class="max-w-7xl mx-auto">
+            <h2 class="sr-only">Catálogo de productos 3D</h2>
 
             <!-- Filter Categories & Search Bar -->
             <div class="flex flex-col lg:flex-row items-center justify-between gap-4 mb-8">
@@ -485,7 +505,7 @@
                 <!-- Image view -->
                 <div
                     class="relative bg-[#050505] h-64 md:h-full min-h-[260px] flex items-center justify-center overflow-hidden border-b md:border-b-0 md:border-r border-white/10">
-                    <img id="modal-img" src="" alt="Producto 3D" class="w-full h-full object-cover">
+                    <img id="modal-img" src="" alt="Producto 3D" width="600" height="400" class="w-full h-full object-cover">
                     <div id="modal-badge"
                         class="absolute top-3 left-3 bg-[#008000]/80 backdrop-blur-md text-white text-[10px] font-bold px-2.5 py-1 rounded-md uppercase tracking-wider">
                         FDM Pro
@@ -574,7 +594,7 @@
                 material: "PLA Silk Oro & Plata",
                 dimensions: "18 x 10 x 10 cm",
                 desc: "Escultura cinética de doble hélice espiral pasante con acabado sedoso en dos tonos. Ideal para escritorios y coleccionistas.",
-                img: "/3D/assets/espiral-vortex.jpg"
+                img: "/3D/assets/espiral-vortex.webp"
             },
             {
                 id: 2,
@@ -587,7 +607,7 @@
                 material: "PETG / PLA HD Resistente",
                 dimensions: "9 x 5.5 x 0.8 cm",
                 desc: "Gadget táctil antiestrés para llevar en el bolsillo. Integra giroscopio concéntrico rotatorio, switch deslizante y pulsadores hápticos.",
-                img: "/3D/assets/edc-fidget-card.jpg"
+                img: "/3D/assets/edc-fidget-card.webp"
             },
             {
                 id: 3,
@@ -600,7 +620,7 @@
                 material: "PLA de Alto Impacto",
                 dimensions: "8 cubos de 20 mm articulados",
                 desc: "Cubo infinito con bisagras mecánicas impresas en una sola pieza sin ensambles. Movimiento perpetuo fluido y antiestrés.",
-                img: "/3D/assets/infinity-cube.jpg"
+                img: "/3D/assets/infinity-cube.webp"
             },
             {
                 id: 4,
@@ -613,7 +633,7 @@
                 material: "PLA Blanco Mate + Pinturas + Pincel",
                 dimensions: "Logo 15 cm + Vasitos + Pincel + Diploma",
                 desc: "Kit creativo para cumpleaños y eventos temáticos. Incluye logo 3D de Minecraft en relieve, set de acrílicos, pincel y diploma de participación.",
-                img: "/3D/assets/kit-minecraft.jpg"
+                img: "/3D/assets/kit-minecraft.webp"
             }
         ];
 
@@ -637,22 +657,44 @@
         };
 
         // --- Color Palettes & Reusable Render Objects ---
-        const tempVoxelColor = new THREE.Color();
-        const staticBlackColor = new THREE.Color(0x000000);
+        let tempVoxelColor, staticBlackColor;
 
         let scene, camera, renderer, instancedMesh;
-        let dummy = new THREE.Object3D();
+        let dummy;
         let pointLight, dirLight;
         let lastTime = 0;
         let waveAccumulator = 0;
         let smoothScrollRatio = 0;
+        let camPositions;
 
-        const camPositions = {
-            isometric: { pos: new THREE.Vector3(18, 22, 22), look: new THREE.Vector3(0, -1, 0) }
-        };
+        let isAnimating = false;
+        let animFrameId = null;
+
+        function startAnimation() {
+            if (!isAnimating && !document.hidden) {
+                isAnimating = true;
+                lastTime = 0;
+                animFrameId = requestAnimationFrame(animate);
+            }
+        }
+
+        function stopAnimation() {
+            if (animFrameId) {
+                cancelAnimationFrame(animFrameId);
+                animFrameId = null;
+            }
+            isAnimating = false;
+        }
 
         function initThree() {
             const canvas = document.getElementById('webgl-canvas');
+
+            tempVoxelColor = new THREE.Color();
+            staticBlackColor = new THREE.Color(0x000000);
+            dummy = new THREE.Object3D();
+            camPositions = {
+                isometric: { pos: new THREE.Vector3(18, 22, 22), look: new THREE.Vector3(0, -1, 0) }
+            };
 
             scene = new THREE.Scene();
             scene.background = new THREE.Color(0x000000);
@@ -682,7 +724,14 @@
 
             createVoxelGrid();
             window.addEventListener('resize', onWindowResize);
-            animate(0);
+            document.addEventListener('visibilitychange', () => {
+                if (!document.hidden && appState !== 'catalog') {
+                    startAnimation();
+                } else if (document.hidden) {
+                    stopAnimation();
+                }
+            });
+            startAnimation();
         }
 
         function createVoxelGrid() {
@@ -706,13 +755,13 @@
         }
 
         function animate(time) {
-            requestAnimationFrame(animate);
-
-            // When in catalog mode, sleep intensive 3D math to keep scrolling 100% fluid
-            if (appState === 'catalog' && transitionProgress >= 1.0) {
-                renderer.render(scene, camera);
+            // When in catalog mode or tab is hidden, stop animation loop to preserve CPU/GPU
+            if (document.hidden || (appState === 'catalog' && transitionProgress >= 1.0)) {
+                stopAnimation();
                 return;
             }
+
+            animFrameId = requestAnimationFrame(animate);
 
             const delta = lastTime === 0 ? 0.016 : Math.min(0.1, (time - lastTime) * 0.001);
             lastTime = time;
@@ -877,6 +926,7 @@
         function navigateTo(view) {
             if (view === 'catalog' && (appState === 'landing' || appState === 'to_landing')) {
                 appState = 'to_catalog';
+                startAnimation();
                 // Update nav highlights
                 document.getElementById('nav-btn-landing').classList.remove('text-white', 'font-bold');
                 document.getElementById('nav-btn-landing').classList.add('text-slate-300');
@@ -900,6 +950,7 @@
             } else if (view === 'landing' && (appState === 'catalog' || appState === 'to_catalog')) {
                 hideCatalogUI();
                 appState = 'to_landing';
+                startAnimation();
 
                 // Update nav highlights
                 document.getElementById('nav-btn-catalog').classList.remove('text-white', 'font-bold');

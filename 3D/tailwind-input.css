@@ -1,0 +1,4 @@
+@import "tailwindcss";
+
+/* Scan only the 3D page */
+@source "./index.html";
