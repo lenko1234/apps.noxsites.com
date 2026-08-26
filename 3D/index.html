@@ -266,6 +266,8 @@
         }
 
         .product-img {
+            object-fit: cover;
+            object-position: center 75%;
             transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
@@ -1019,7 +1021,7 @@
             grid.innerHTML = products.map(p => `
                 <div class="product-card rounded-2xl overflow-hidden flex flex-col justify-between group">
                     <div class="relative h-52 bg-[#080912] overflow-hidden">
-                        <img src="${p.img}" alt="${p.title}" decoding="async" loading="eager" class="w-full h-full object-cover product-img">
+                        <img src="${p.img}" alt="${p.title}" decoding="async" loading="eager" class="w-full h-full object-cover product-img" ${p.imgPos ? `style="object-position: ${p.imgPos};"` : ''}>
                         <span class="absolute top-3 left-3 bg-[#05050b]/80 backdrop-blur-md border border-white/10 text-slate-200 text-[10px] font-bold px-2.5 py-1 rounded-md uppercase tracking-wider">
                             ${p.badge}
                         </span>
