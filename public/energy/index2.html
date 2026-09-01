@@ -101,6 +101,31 @@
             transform: scale(1.05);
         }
 
+        body.is-fullscreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100dvh;
+        }
+
+        body.is-fullscreen .hud-info {
+            display: none !important;
+        }
+
+        body.is-fullscreen .fullscreen-btn {
+            opacity: 0.45;
+            bottom: 16px;
+            right: 16px;
+            padding: 8px 14px;
+            font-size: 11px;
+        }
+
+        body.is-fullscreen .fullscreen-btn:hover,
+        body.is-fullscreen .fullscreen-btn:active {
+            opacity: 1;
+        }
+
         @keyframes pulse {
 
             0%,
@@ -129,33 +154,54 @@
     </button>
 
     <script>
+        let isImmersive = false;
+
         function toggleFullscreen() {
+            isImmersive = !isImmersive;
             const doc = document;
             const docEl = doc.documentElement;
-            const requestFS = docEl.requestFullscreen || docEl.webkitRequestFullscreen || docEl.mozRequestFullScreen || docEl.msRequestFullscreen;
-            const exitFS = doc.exitFullscreen || doc.webkitExitFullscreen || doc.mozCancelFullScreen || doc.msExitFullscreen;
-            const isFS = doc.fullscreenElement || doc.webkitFullscreenElement || doc.mozFullScreenElement || doc.msFullscreenElement;
+            const btnText = document.querySelector('#fsToggleBtn span');
 
-            if (!isFS) {
-                if (requestFS) {
-                    requestFS.call(docEl).catch(err => {
-                        console.log("Error al activar pantalla completa:", err);
-                    });
-                }
+            // 1. Alternar estado visual CSS (Funciona en TODOS los celulares e iOS Safari)
+            if (isImmersive) {
+                document.body.classList.add('is-fullscreen');
+                if (btnText) btnText.textContent = 'Salir de Fullscreen';
+                window.scrollTo(0, 1);
             } else {
-                if (exitFS) {
-                    exitFS.call(doc);
-                }
+                document.body.classList.remove('is-fullscreen');
+                if (btnText) btnText.textContent = 'Pantalla Completa';
             }
+
+            // 2. Intentar API Nativa Fullscreen si el navegador lo soporta (Android/Chrome/PC)
+            try {
+                if (isImmersive) {
+                    const req = docEl.requestFullscreen || docEl.webkitRequestFullscreen || docEl.mozRequestFullScreen || docEl.msRequestFullscreen;
+                    if (req) {
+                        req.call(docEl).catch(() => {});
+                    }
+                } else {
+                    const exit = doc.exitFullscreen || doc.webkitExitFullscreen || doc.mozCancelFullScreen || doc.msExitFullscreen;
+                    if (exit && (doc.fullscreenElement || doc.webkitFullscreenElement || doc.mozFullScreenElement || doc.msFullscreenElement)) {
+                        exit.call(doc).catch(() => {});
+                    }
+                }
+            } catch (err) {
+                console.log("Native Fullscreen notice:", err);
+            }
+
+            // Forzar actualización de tamaño en Three.js
+            setTimeout(() => {
+                window.dispatchEvent(new Event('resize'));
+            }, 100);
         }
 
         function handleFSChange() {
-            const isFS = document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement;
+            const isFS = !!(document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement);
             const btnText = document.querySelector('#fsToggleBtn span');
             if (isFS) {
+                isImmersive = true;
+                document.body.classList.add('is-fullscreen');
                 if (btnText) btnText.textContent = 'Salir de Fullscreen';
-            } else {
-                if (btnText) btnText.textContent = 'Pantalla Completa';
             }
         }
 
