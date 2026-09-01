@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Magical Singularity Core (Bola de Energía 3D)</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #000;
+            overflow: hidden;
+            font-family: monospace;
+        }
+
+        canvas {
+            display: block;
+        }
+
+        .info {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 120, 0, 0.4);
+            padding: 10px 24px;
+            border-radius: 20px;
+            color: #ff9900;
+            font-size: 13px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            pointer-events: none;
+            box-shadow: 0 0 20px rgba(255, 100, 0, 0.2);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="info">🔮 NÚCLEO DE SINGULARIDAD 3D (Rotar con el Mouse / Scroll Zoom)</div>
+
+    <script type="module">
+        import * as THREE from 'https://esm.sh/three@0.149.0';
+        import { OrbitControls } from 'https://esm.sh/three@0.149.0/examples/jsm/controls/OrbitControls.js';
+        import { EffectComposer } from 'https://esm.sh/three@0.149.0/examples/jsm/postprocessing/EffectComposer.js';
+        import { RenderPass } from 'https://esm.sh/three@0.149.0/examples/jsm/postprocessing/RenderPass.js';
+        import { UnrealBloomPass } from 'https://esm.sh/three@0.149.0/examples/jsm/postprocessing/UnrealBloomPass.js';
+
+        // 1. RUIDO SIMPLEX EN GLSL (Utilizado para deformación y texturizado orgánico)
+        const noiseGLSL = `
+vec4 permute(vec4 x){return mod(((x*34.0)+1.0)*x,289.0);}
+vec4 taylorInvSqrt(vec4 r){return 1.79284291400159-0.85373472095314*r;}
+float snoise(vec3 v){
+  const vec2 C=vec2(1.0/6.0,1.0/3.0);
+  const vec4 D=vec4(0.0,0.5,1.0,2.0);
+  vec3 i=floor(v+dot(v,C.yyy));
+  vec3 x0=v-i+dot(i,C.xxx);
+  vec3 g=step(x0.yzx,x0.xyz);
+  vec3 l=1.0-g;
+  vec3 i1=min(g.xyz,l.zxy);
+  vec3 i2=max(g.xyz,l.zxy);
+  vec3 x1=x0-i1+C.xxx;
+  vec3 x2=x0-i2+C.xxx*2.0;
+  vec3 x3=x0-1.0+C.xxx*3.0;
+  i=mod(i,289.0);
+  vec4 p=permute(permute(permute(i.z+vec4(0.0,i1.z,i2.z,1.0))+i.y+vec4(0.0,i1.y,i2.y,1.0))+i.x+vec4(0.0,i1.x,i2.x,1.0));
+  float n_=1.0/7.0;
+  vec3 ns=n_*D.wyz-D.xzx;
+  vec4 j=p-49.0*floor(p*ns.z*ns.z);
+  vec4 x_=floor(j*ns.z);
+  vec4 y_=floor(j-7.0*x_);
+  vec4 x=x_*ns.x+ns.yyyy;
+  vec4 y=y_*ns.x+ns.yyyy;
+  vec4 h=1.0-abs(x)-abs(y);
+  vec4 b0=vec4(x.xy,y.xy); vec4 b1=vec4(x.zw,y.zw);
+  vec4 s0=floor(b0)*2.0+1.0; vec4 s1=floor(b1)*2.0+1.0;
+  vec4 sh=-step(h,vec4(0.0));
+  vec4 a0=b0.xzyw+s0.xzyw*sh.xxyy; vec4 a1=b1.xzyw+s1.xzyw*sh.zzww;
+  vec3 p0=vec3(a0.xy,h.x); vec3 p1=vec3(a0.zw,h.y); vec3 p2=vec3(a1.xy,h.z); vec3 p3=vec3(a1.zw,h.w);
+  vec4 norm=taylorInvSqrt(vec4(dot(p0,p0),dot(p1,p1),dot(p2,p2),dot(p3,p3)));
+  p0*=norm.x; p1*=norm.y; p2*=norm.z; p3*=norm.w;
+  vec4 m=max(0.6-vec4(dot(x0,x0),dot(x1,x1),dot(x2,x2),dot(x3,x3)),0.0);
+  m=m*m; return 42.0*dot(m*m,vec4(dot(p0,x0),dot(p1,x1),dot(p2,x2),dot(p3,x3)));
+}
+`;
+
+        // 2. VERTEX SHADER DE LA BOLA (Deforma los vértices en 3D)
+        const coreVert = `
+${noiseGLSL}
+varying vec3 vPos;
+uniform float uTime;
+void main(){
+    vec3 p = position;
+    float t = uTime * 15.0;
+    
+    // Deformación turbulenta usando ruido
+    float erraticT = t * 0.2 + snoise(p * 0.5 + t * 0.1) * 3.0;
+    float noiseL = snoise(p * 1.5 + erraticT); 
+    float noiseH = snoise(p * 6.0 - t * 0.4); 
+    
+    float deformation = noiseL * 0.5 + noiseH * 0.1;
+    p += normalize(p) * deformation;
+    
+    vPos = p;
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0);
+}
+`;
+
+        // 3. FRAGMENT SHADER DE LA BOLA (6 Capas de energía visual)
+        const coreFrag = `
+${noiseGLSL}
+varying vec3 vPos;
+uniform float uTime;
+uniform vec3 uColor1;
+uniform vec3 uColor2;
+void main(){
+    float t = uTime * 45.0;
+    vec3 p = vPos;
+    float d = length(p) / 1.3;
+    
+    // Capa 1: Asimetría y turbulencia temporal
+    float erraticTime = t * 0.1 + snoise(p * 0.2 + t * 0.05) * 5.0;
+    float shift = snoise(vec3(p.xy * 0.4, erraticTime));
+    float dOffset = d + shift * 0.15;
+    
+    // Capa 2: Parpadeo y rotura de bordes (Transparencia)
+    float flicker = step(0.4, snoise(vec3(p * 2.0 + t * 0.1)));
+    float edgeNoise = snoise(p * 4.0 - t * 0.1);
+    float alphaMask = smoothstep(1.7 + edgeNoise * 0.5, 0.0, dOffset) * mix(0.7, 1.0, flicker);
+    
+    // Capa 3: Corazón blanco hiper-brillante central
+    float n1 = snoise(p * 18.0 + t * 0.3);
+    float microFracture = pow(1.0 - abs(n1), 40.0);
+    float heart = exp(-dOffset * 15.0) * mix(0.2, 1.0, microFracture); 
+    
+    // Capa 4: Grietas dimensionales nítidas
+    float crackPattern = pow(1.0 - abs(snoise(p * 10.0 + t * 0.2)), 30.0);
+    
+    // Capa 5: Sombras/Vacíos de compresión
+    float voids = step(0.55, abs(snoise(p * 5.0 - t * 0.04 + shift)));
+    
+    // Capa 6: Starburst (Rayos de energía rotativos)
+    float angle = atan(p.z, p.x);
+    float rays1 = sin(angle * 8.0 + t * 4.0) * 0.5 + 0.5;
+    float rays2 = sin(angle * 12.0 - t * 3.0) * 0.5 + 0.5;
+    float starburst = pow(rays1 * rays2, 3.0) * smoothstep(1.1, 0.0, dOffset);
+    
+    // Mezcla de colores base (Azul / Naranja)
+    vec3 col = mix(uColor1, uColor2, p.x * 0.5 + 0.5 + shift * 0.4);
+    
+    // Composición final acumulativa con HDR
+    col = mix(col, vec3(0.0), voids * 0.9);            // Sombras oscuras de vacío
+    col += vec3(280.0) * heart;                        // Centro blanco incandescente
+    col += vec3(140.0) * crackPattern * (1.1 - dOffset);// Grietas de alta energía
+    col += vec3(50.0) * starburst;                      // Destellos rotativos
+    
+    // Filamentos perimetrales eyectados
+    float filaments = pow(abs(snoise(vec3(atan(p.z, p.x) * 4.0, p.y * 2.0, t * 0.3))), 8.0);
+    col += uColor2 * filaments * 4.0 * (1.5 - dOffset);
+    col += vec3(60.0) * exp(-dOffset * 30.0) * microFracture;
+
+    gl_FragColor = vec4(col, alphaMask);
+}
+`;
+
+        // 4. CONFIGURACIÓN DE ESCENA THREE.JS
+        const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        document.body.appendChild(renderer.domElement);
+
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(0, 1, 6);
+
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+
+        // Post-Procesado (Bloom para hacer que brille el núcleo)
+        const composer = new EffectComposer(renderer);
+        composer.addPass(new RenderPass(scene, camera));
+
+        const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 2.5, 0.4, 0.85);
+        bloomPass.threshold = 0.1;
+        bloomPass.strength = 2.8;
+        composer.addPass(bloomPass);
+
+        // 5. CREACIÓN DE LA MALLA DE LA BOLA DE SINGULARIDAD
+        const colL = new THREE.Color('#0066ff'); // Azul Cobalto
+        const colR = new THREE.Color('#ff5500'); // Naranja Fuego
+
+        const coreMat = new THREE.ShaderMaterial({
+            vertexShader: coreVert,
+            fragmentShader: coreFrag,
+            uniforms: {
+                uTime: { value: 0 },
+                uColor1: { value: colL },
+                uColor2: { value: colR }
+            },
+            transparent: true,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false
+        });
+
+        const coreGeo = new THREE.IcosahedronGeometry(1.3, 15);
+        const coreMesh = new THREE.Mesh(coreGeo, coreMat);
+        scene.add(coreMesh);
+
+        // 6. SISTEMA DE CHISPAS ERUPTIVAS (Partículas que nacen de la bola)
+        const sparksGeo = new THREE.BufferGeometry();
+        const COUNT = 800;
+        const sP = new Float32Array(COUNT * 3);
+        const sV = new Float32Array(COUNT * 3);
+        const sO = new Float32Array(COUNT);
+
+        for (let i = 0; i < COUNT; i++) {
+            const speed = 0.5 + Math.random() * 1.5;
+            const phi = Math.random() * Math.PI * 2;
+            const theta = (Math.random() - 0.5) * Math.PI;
+            sV[i * 3] = speed * Math.cos(theta) * Math.cos(phi);
+            sV[i * 3 + 1] = speed * Math.sin(theta);
+            sV[i * 3 + 2] = speed * Math.cos(theta) * Math.sin(phi);
+            sO[i] = Math.random() * 5.0;
+        }
+
+        sparksGeo.setAttribute('position', new THREE.BufferAttribute(sP, 3));
+        sparksGeo.setAttribute('aVel', new THREE.BufferAttribute(sV, 3));
+        sparksGeo.setAttribute('aOff', new THREE.BufferAttribute(sO, 1));
+
+        const sparksMat = new THREE.ShaderMaterial({
+            vertexShader: `
+        uniform float uTime;
+        attribute vec3 aVel;
+        attribute float aOff;
+        varying float vLife;
+        void main(){
+            float t = mod(uTime * 0.8 + aOff, 2.0);
+            vLife = smoothstep(2.0, 1.5, t) * smoothstep(0.0, 0.2, t);
+            vec3 p = aVel * t * 2.5;
+            p.y -= 2.0 * 0.5 * t * t; // Gravedad suave
+            vec4 mv = modelViewMatrix * vec4(p, 1.0);
+            gl_PointSize = (100.0 / -mv.z) * vLife;
+            gl_Position = projectionMatrix * mv;
+        }
+    `,
+            fragmentShader: `
+        varying float vLife;
+        uniform vec3 uColor;
+        void main(){
+            float d = length(gl_PointCoord.xy - 0.5);
+            if(d > 0.5) discard;
+            float glow = exp(-d * 6.0);
+            gl_FragColor = vec4(uColor * 15.0, vLife * glow);
+        }
+    `,
+            uniforms: { uTime: { value: 0 }, uColor: { value: colR } },
+            transparent: true, blending: THREE.AdditiveBlending, depthWrite: false
+        });
+
+        const sparksMesh = new THREE.Points(sparksGeo, sparksMat);
+        scene.add(sparksMesh);
+
+        // 7. LOOP DE ANIMACIÓN Y RENDER
+        const clock = new THREE.Clock();
+        function animate() {
+            requestAnimationFrame(animate);
+            const t = clock.getElapsedTime();
+
+            // Actualizar tiempo en shaders
+            coreMat.uniforms.uTime.value = t;
+            sparksMat.uniforms.uTime.value = t;
+
+            // Rotar ligeramente la bola para mayor dinamismo
+            coreMesh.rotation.y = t * 0.2;
+            coreMesh.rotation.x = t * 0.1;
+
+            controls.update();
+            composer.render();
+        }
+        animate();
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            composer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+
+</html>

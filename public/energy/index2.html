@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cian: Singularity Core & Night Sea (index2.html)</title>
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔮</text></svg>">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #000;
+            user-select: none;
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+        }
+
+        canvas {
+            display: block;
+        }
+
+        .hud-info {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(56, 189, 248, 0.3);
+            padding: 10px 24px;
+            border-radius: 20px;
+            color: #7dd3fc;
+            font-size: 13px;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            pointer-events: none;
+            box-shadow: 0 0 20px rgba(0, 150, 255, 0.2);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #00dfff;
+            box-shadow: 0 0 8px #00dfff;
+            animation: pulse 1.5s infinite ease-in-out;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+
+            50% {
+                transform: scale(1.4);
+                opacity: 0.5;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="hud-info">
+        <div class="status-dot"></div>
+    </div>
+
+    <!-- ES Module Import for Three.js & Postprocessing -->
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.165.0/build/three.module.js",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.165.0/examples/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+        import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+        import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+
+        // ─────────────────────────────────────────────────────────
+        //  1. REFLECTOR (SUELO ESPEJADO MOJADO)
+        // ─────────────────────────────────────────────────────────
+        class Reflector extends THREE.Mesh {
+            constructor(geometry, options = {}) {
+                super(geometry);
+                this.type = 'Reflector';
+                const scope = this;
+                const color = (options.color !== undefined) ? new THREE.Color(options.color) : new THREE.Color(0xFFFFFF);
+                const textureWidth = options.textureWidth || 512;
+                const textureHeight = options.textureHeight || 512;
+                const clipBias = options.clipBias || 0;
+                const shader = options.shader || Reflector.ReflectorShader;
+
+                const reflectorPlane = new THREE.Plane();
+                const normal = new THREE.Vector3();
+                const reflectorWorldPosition = new THREE.Vector3();
+                const cameraWorldPosition = new THREE.Vector3();
+                const rotationMatrix = new THREE.Matrix4();
+                const lookAtPosition = new THREE.Vector3(0, 0, -1);
+                const clipPlane = new THREE.Vector4();
+                const view = new THREE.Vector3();
+                const target = new THREE.Vector3();
+                const q = new THREE.Vector4();
+                const textureMatrix = new THREE.Matrix4();
+                const virtualCamera = new THREE.PerspectiveCamera();
+
+                const renderTarget = new THREE.WebGLRenderTarget(textureWidth, textureHeight, {
+                    minFilter: THREE.LinearFilter,
+                    magFilter: THREE.LinearFilter,
+                    format: THREE.RGBAFormat
+                });
+
+                this.material = new THREE.ShaderMaterial({
+                    uniforms: THREE.UniformsUtils.clone(shader.uniforms),
+                    fragmentShader: shader.fragmentShader,
+                    vertexShader: shader.vertexShader,
+                    transparent: true
+                });
+
+                this.material.uniforms['tDiffuse'].value = renderTarget.texture;
+                this.material.uniforms['color'].value = color;
+                this.material.uniforms['textureMatrix'].value = textureMatrix;
+
+                this.onBeforeRender = function (renderer, scene, camera) {
+                    reflectorWorldPosition.setFromMatrixPosition(scope.matrixWorld);
+                    cameraWorldPosition.setFromMatrixPosition(camera.matrixWorld);
+                    rotationMatrix.extractRotation(scope.matrixWorld);
+                    normal.set(0, 0, 1);
+                    normal.applyMatrix4(rotationMatrix);
+                    view.subVectors(reflectorWorldPosition, cameraWorldPosition);
+                    if (view.dot(normal) > 0) return;
+                    view.reflect(normal).negate();
+                    view.add(reflectorWorldPosition);
+                    rotationMatrix.extractRotation(camera.matrixWorld);
+                    lookAtPosition.set(0, 0, -1);
+                    lookAtPosition.applyMatrix4(rotationMatrix);
+                    lookAtPosition.add(cameraWorldPosition);
+                    target.subVectors(lookAtPosition, cameraWorldPosition);
+                    target.reflect(normal).negate();
+                    target.add(reflectorWorldPosition);
+                    virtualCamera.position.copy(view);
+                    virtualCamera.up.set(0, 1, 0);
+                    virtualCamera.up.applyMatrix4(rotationMatrix);
+                    virtualCamera.up.reflect(normal);
+                    virtualCamera.lookAt(target);
+                    virtualCamera.far = camera.far;
+                    virtualCamera.updateMatrixWorld();
+                    virtualCamera.projectionMatrix.copy(camera.projectionMatrix);
+                    textureMatrix.set(0.5, 0.0, 0.0, 0.5, 0.0, 0.5, 0.0, 0.5, 0.0, 0.0, 0.5, 0.5, 0.0, 0.0, 0.0, 1.0);
+                    textureMatrix.multiply(virtualCamera.projectionMatrix);
+                    textureMatrix.multiply(virtualCamera.matrixWorldInverse);
+                    textureMatrix.multiply(scope.matrixWorld);
+                    reflectorPlane.setFromNormalAndCoplanarPoint(normal, reflectorWorldPosition);
+                    reflectorPlane.applyMatrix4(virtualCamera.matrixWorldInverse);
+                    clipPlane.set(reflectorPlane.normal.x, reflectorPlane.normal.y, reflectorPlane.normal.z, reflectorPlane.constant);
+                    const projectionMatrix = virtualCamera.projectionMatrix;
+                    q.x = (Math.sign(clipPlane.x) + projectionMatrix.elements[8]) / projectionMatrix.elements[0];
+                    q.y = (Math.sign(clipPlane.y) + projectionMatrix.elements[9]) / projectionMatrix.elements[5];
+                    q.z = -1.0;
+                    q.w = (1.0 + projectionMatrix.elements[10]) / projectionMatrix.elements[14];
+                    clipPlane.multiplyScalar(2.0 / clipPlane.dot(q));
+                    projectionMatrix.elements[2] = clipPlane.x;
+                    projectionMatrix.elements[6] = clipPlane.y;
+                    projectionMatrix.elements[10] = clipPlane.z + 1.0 - clipBias;
+                    projectionMatrix.elements[14] = clipPlane.w;
+                    scope.visible = false;
+
+                    const hiddenPoints = [];
+                    scene.traverse(function (obj) {
+                        if (obj.isPoints && obj.visible) {
+                            obj.visible = false;
+                            hiddenPoints.push(obj);
+                        }
+                    });
+
+                    const currentRenderTarget = renderer.getRenderTarget();
+                    renderer.setRenderTarget(renderTarget);
+                    if (renderer.autoClear === false) renderer.clear();
+                    renderer.render(scene, virtualCamera);
+                    renderer.setRenderTarget(currentRenderTarget);
+
+                    hiddenPoints.forEach(obj => obj.visible = true);
+                    scope.visible = true;
+                };
+            }
+        }
+
+        Reflector.ReflectorShader = {
+            uniforms: {
+                'color': { value: null },
+                'tDiffuse': { value: null },
+                'textureMatrix': { value: null },
+                'time': { value: 0 },
+                'lightPos': { value: new THREE.Vector3() }
+            },
+            vertexShader: `
+                uniform mat4 textureMatrix;
+                varying vec4 vUv;
+                varying vec2 vBaseUv;
+                varying vec3 vWorldPosition;
+                void main() {
+                    vBaseUv = uv;
+                    vUv = textureMatrix * vec4( position, 1.0 );
+                    vWorldPosition = (modelMatrix * vec4(position, 1.0)).xyz;
+                    gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+                }`,
+            fragmentShader: `
+                uniform vec3 color;
+                uniform sampler2D tDiffuse;
+                uniform float time;
+                uniform vec3 lightPos;
+                varying vec4 vUv;
+                varying vec2 vBaseUv;
+                varying vec3 vWorldPosition;
+
+                float hash(vec2 p) { return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
+
+                void main() {
+                    vec2 distortion = vec2(
+                        sin(vBaseUv.y * 18.0 + time * 0.9) * 0.0015,
+                        cos(vBaseUv.x * 18.0 + time * 0.9) * 0.0015
+                    );
+                    vec4 reflected = texture2DProj( tDiffuse, vUv + vec4(distortion, 0.0, 0.0) );
+                    vec3 reflection = pow(reflected.rgb, vec3(2.2)) * 1.6;
+                    float grain = hash(vBaseUv * 600.0) * 0.02;
+                    
+                    float d = distance(vWorldPosition, lightPos);
+                    float heightBoost = 1.0 + (1.0 - clamp(lightPos.y / 5.0, 0.0, 1.0)) * 0.35;
+                    float lightSpot = exp(-d * 0.22) * 0.45 * heightBoost;
+                    
+                    float horizonFade = smoothstep(-60.0, -8.0, vWorldPosition.z);
+                    vec3 base = (reflection + grain) * horizonFade;
+                    vec3 specular = vec3(lightSpot * 0.25, lightSpot * 0.85, lightSpot * 1.4);
+                    vec3 finalColor = (base + specular) * color;
+
+                    gl_FragColor = vec4(finalColor, 1.0);
+                }`
+        };
+
+        // ─────────────────────────────────────────────────────────
+        //  2. SHADERS DEL NÚCLEO DE SINGULARIDAD (BALL.HTML)
+        // ─────────────────────────────────────────────────────────
+        const noiseGLSL = `
+        vec4 permute(vec4 x){return mod(((x*34.0)+1.0)*x,289.0);}
+        vec4 taylorInvSqrt(vec4 r){return 1.79284291400159-0.85373472095314*r;}
+        float snoise(vec3 v){
+          const vec2 C=vec2(1.0/6.0,1.0/3.0);
+          const vec4 D=vec4(0.0,0.5,1.0,2.0);
+          vec3 i=floor(v+dot(v,C.yyy));
+          vec3 x0=v-i+dot(i,C.xxx);
+          vec3 g=step(x0.yzx,x0.xyz);
+          vec3 l=1.0-g;
+          vec3 i1=min(g.xyz,l.zxy);
+          vec3 i2=max(g.xyz,l.zxy);
+          vec3 x1=x0-i1+C.xxx;
+          vec3 x2=x0-i2+C.xxx*2.0;
+          vec3 x3=x0-1.0+C.xxx*3.0;
+          i=mod(i,289.0);
+          vec4 p=permute(permute(permute(i.z+vec4(0.0,i1.z,i2.z,1.0))+i.y+vec4(0.0,i1.y,i2.y,1.0))+i.x+vec4(0.0,i1.x,i2.x,1.0));
+          float n_=1.0/7.0;
+          vec3 ns=n_*D.wyz-D.xzx;
+          vec4 j=p-49.0*floor(p*ns.z*ns.z);
+          vec4 x_=floor(j*ns.z);
+          vec4 y_=floor(j-7.0*x_);
+          vec4 x=x_*ns.x+ns.yyyy;
+          vec4 y=y_*ns.x+ns.yyyy;
+          vec4 h=1.0-abs(x)-abs(y);
+          vec4 b0=vec4(x.xy,y.xy); vec4 b1=vec4(x.zw,y.zw);
+          vec4 s0=floor(b0)*2.0+1.0; vec4 s1=floor(b1)*2.0+1.0;
+          vec4 sh=-step(h,vec4(0.0));
+          vec4 a0=b0.xzyw+s0.xzyw*sh.xxyy; vec4 a1=b1.xzyw+s1.xzyw*sh.zzww;
+          vec3 p0=vec3(a0.xy,h.x); vec3 p1=vec3(a0.zw,h.y); vec3 p2=vec3(a1.xy,h.z); vec3 p3=vec3(a1.zw,h.w);
+          vec4 norm=taylorInvSqrt(vec4(dot(p0,p0),dot(p1,p1),dot(p2,p2),dot(p3,p3)));
+          p0*=norm.x; p1*=norm.y; p2*=norm.z; p3*=norm.w;
+          vec4 m=max(0.6-vec4(dot(x0,x0),dot(x1,x1),dot(x2,x2),dot(x3,x3)),0.0);
+          m=m*m; return 42.0*dot(m*m,vec4(dot(p0,x0),dot(p1,x1),dot(p2,x2),dot(p3,x3)));
+        }
+        `;
+
+        const coreVert = `
+        ${noiseGLSL}
+        varying vec3 vPos;
+        uniform float uTime;
+        void main(){
+            vec3 p = position;
+            float t = uTime * 15.0;
+            float erraticT = t * 0.2 + snoise(p * 0.5 + t * 0.1) * 3.0;
+            float noiseL = snoise(p * 1.5 + erraticT); 
+            float noiseH = snoise(p * 6.0 - t * 0.4); 
+            
+            float deformation = noiseL * 0.5 + noiseH * 0.1;
+            p += normalize(p) * deformation;
+            
+            vPos = p;
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0);
+        }
+        `;
+
+        const coreFrag = `
+        ${noiseGLSL}
+        varying vec3 vPos;
+        uniform float uTime;
+        uniform vec3 uColor1;
+        uniform vec3 uColor2;
+        void main(){
+            float t = uTime * 45.0;
+            vec3 p = vPos;
+            float d = length(p) / 1.3;
+            
+            float erraticTime = t * 0.1 + snoise(p * 0.2 + t * 0.05) * 5.0;
+            float shift = snoise(vec3(p.xy * 0.4, erraticTime));
+            float dOffset = d + shift * 0.15;
+            
+            float flicker = step(0.4, snoise(vec3(p * 2.0 + t * 0.1)));
+            float edgeNoise = snoise(p * 4.0 - t * 0.1);
+            float alphaMask = smoothstep(1.7 + edgeNoise * 0.5, 0.0, dOffset) * mix(0.7, 1.0, flicker);
+            
+            float n1 = snoise(p * 18.0 + t * 0.3);
+            float microFracture = pow(1.0 - abs(n1), 40.0);
+            float heart = exp(-dOffset * 15.0) * mix(0.2, 1.0, microFracture); 
+            
+            float crackPattern = pow(1.0 - abs(snoise(p * 10.0 + t * 0.2)), 30.0);
+            float voids = step(0.55, abs(snoise(p * 5.0 - t * 0.04 + shift)));
+            
+            float angle = atan(p.z, p.x);
+            float rays1 = sin(angle * 8.0 + t * 4.0) * 0.5 + 0.5;
+            float rays2 = sin(angle * 12.0 - t * 3.0) * 0.5 + 0.5;
+            float starburst = pow(rays1 * rays2, 3.0) * smoothstep(1.1, 0.0, dOffset);
+            
+            vec3 col = mix(uColor1, uColor2, p.x * 0.5 + 0.5 + shift * 0.4);
+            
+            col = mix(col, vec3(0.0), voids * 0.85);
+            col += vec3(14.0, 1.0, 1.2) * heart;                        // Núcleo interno rojo incandescente
+            col += vec3(1.5, 5.5, 9.5) * crackPattern * (1.1 - dOffset);// Grietas de energía en azul eléctrico y cian
+            col += vec3(1.0, 4.5, 8.0) * starburst;                     // Destellos de descarga eléctrica celeste
+            
+            float filaments = pow(abs(snoise(vec3(atan(p.z, p.x) * 4.0, p.y * 2.0, t * 0.3))), 8.0);
+            col += vec3(0.2, 0.8, 1.0) * filaments * 3.5 * (1.5 - dOffset);
+            col += vec3(8.0, 0.5, 0.8) * exp(-dOffset * 30.0) * microFracture; // Centro profundo rojo intenso
+
+            gl_FragColor = vec4(col, alphaMask);
+        }
+        `;
+
+        // ─────────────────────────────────────────────────────────
+        //  3. CLASE ESTRELLA FUGAZ 3D
+        // ─────────────────────────────────────────────────────────
+        class ShootingStar {
+            constructor(scene) {
+                this.scene = scene;
+                this.mesh = new THREE.Group();
+
+                const coreHeadGeo = new THREE.SphereGeometry(0.04, 8, 8);
+                const coreHeadMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0, fog: false });
+                this.coreHead = new THREE.Mesh(coreHeadGeo, coreHeadMat);
+                this.mesh.add(this.coreHead);
+
+                const coreTailGeo = new THREE.ConeGeometry(0.02, 4.0, 4);
+                coreTailGeo.rotateX(-Math.PI / 2);
+                coreTailGeo.translate(0, 0, -2.0);
+                const coreTailMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0, fog: false });
+                this.coreTail = new THREE.Mesh(coreTailGeo, coreTailMat);
+                this.mesh.add(this.coreTail);
+
+                const glowHeadGeo = new THREE.SphereGeometry(0.12, 8, 8);
+                const glowHeadMat = new THREE.MeshBasicMaterial({ color: 0x00f3ff, transparent: true, opacity: 0, fog: false });
+                this.glowHead = new THREE.Mesh(glowHeadGeo, glowHeadMat);
+                this.mesh.add(this.glowHead);
+
+                const glowTailGeo = new THREE.ConeGeometry(0.08, 6.5, 4);
+                glowTailGeo.rotateX(-Math.PI / 2);
+                glowTailGeo.translate(0, 0, -3.25);
+                const glowTailMat = new THREE.MeshBasicMaterial({ color: 0x00aaff, transparent: true, opacity: 0, fog: false });
+                this.glowTail = new THREE.Mesh(glowTailGeo, glowTailMat);
+                this.mesh.add(this.glowTail);
+
+                this.scene.add(this.mesh);
+                this.active = false;
+            }
+
+            spawn() {
+                this.active = true;
+                this.progress = 0;
+                this.startPos = new THREE.Vector3(
+                    (Math.random() - 0.5) * 80,
+                    25 + Math.random() * 15,
+                    -100 - Math.random() * 80
+                );
+                const dirX = (Math.random() > 0.5 ? 1 : -1) * (1.2 + Math.random() * 0.8);
+                const dirY = -0.4 - Math.random() * 0.4;
+                const dirZ = (Math.random() - 0.5) * 0.3;
+                this.dir = new THREE.Vector3(dirX, dirY, dirZ).normalize();
+                this.mesh.position.copy(this.startPos);
+                const up = new THREE.Vector3(0, 0, 1);
+                this.mesh.quaternion.setFromUnitVectors(up, this.dir.clone().normalize());
+                this.speed = 1.8 + Math.random() * 1.0;
+            }
+
+            update() {
+                if (!this.active) return;
+                this.mesh.position.addScaledVector(this.dir, this.speed);
+                this.progress += 0.015;
+
+                let baseOpacity = 0.9;
+                if (this.progress > 0.4) {
+                    baseOpacity = Math.max(0, 1.0 - (this.progress - 0.4) * 1.66) * 0.9;
+                }
+
+                const horizonY = 3.0;
+                const fadeRange = 8.0;
+                if (this.mesh.position.y < horizonY + fadeRange) {
+                    const factor = Math.max(0, (this.mesh.position.y - horizonY) / fadeRange);
+                    baseOpacity *= factor;
+                }
+
+                this.coreHead.material.opacity = baseOpacity * 1.0;
+                this.coreTail.material.opacity = baseOpacity * 0.65;
+                this.glowHead.material.opacity = baseOpacity * 0.45;
+                this.glowTail.material.opacity = baseOpacity * 0.35;
+
+                if (this.progress >= 1.0 || this.mesh.position.y <= horizonY) {
+                    this.active = false;
+                }
+            }
+        }
+
+        // ─────────────────────────────────────────────────────────
+        //  4. CONFIGURACIÓN PRINCIPAL DE LA ESCENA
+        // ─────────────────────────────────────────────────────────
+        const scene = new THREE.Scene();
+        const skyColor = 0x000103;
+        scene.background = new THREE.Color(skyColor);
+        scene.fog = new THREE.Fog(skyColor, 15, 75);
+
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(0, 4, 25);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 1.05;
+        document.body.appendChild(renderer.domElement);
+
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.minDistance = 5;
+        controls.maxDistance = 50;
+
+        // Postprocessing (Bloom calibrado para evitar sobreexposición)
+        const composer = new EffectComposer(renderer);
+        composer.addPass(new RenderPass(scene, camera));
+
+        const bloomPass = new UnrealBloomPass(
+            new THREE.Vector2(window.innerWidth, window.innerHeight),
+            0.85, // strength (resplandor elegante y calibrado)
+            0.45, // radius
+            0.25  // threshold
+        );
+        composer.addPass(bloomPass);
+
+        // Estrellas de Fondo (360 grados)
+        const totalStars = 260;
+        const brightStarsGeo = new THREE.BufferGeometry();
+        const brightStarPos = new Float32Array(totalStars * 3);
+        const brightStarColors = new Float32Array(totalStars * 3);
+
+        const specialStars = [
+            { yaw: -38, pitch: 14, brightness: 0.85 },
+            { yaw: -28, pitch: 6, brightness: 0.40 },
+            { yaw: -18, pitch: 20, brightness: 0.90 },
+            { yaw: -9, pitch: 5, brightness: 0.30 },
+            { yaw: -2, pitch: 15, brightness: 0.75 },
+            { yaw: 6, pitch: 9, brightness: 0.95 },
+            { yaw: 14, pitch: 18, brightness: 0.35 },
+            { yaw: 23, pitch: 4, brightness: 1.00 },
+            { yaw: 31, pitch: 11, brightness: 0.55 },
+            { yaw: 39, pitch: 16, brightness: 0.80 }
+        ];
+
+        const rSpecial = 450;
+        for (let i = 0; i < totalStars; i++) {
+            let yaw, pitch, brightness;
+            if (i < 10) {
+                yaw = specialStars[i].yaw;
+                pitch = specialStars[i].pitch;
+                brightness = specialStars[i].brightness;
+            } else {
+                yaw = Math.random() * 360 - 180;
+                pitch = 2.0 + Math.random() * 68.0;
+                brightness = 0.08 + Math.random() * 0.42;
+            }
+
+            const yawRad = yaw * Math.PI / 180;
+            const pitchRad = pitch * Math.PI / 180;
+
+            brightStarPos[i * 3] = rSpecial * Math.cos(pitchRad) * Math.sin(yawRad);
+            brightStarPos[i * 3 + 1] = rSpecial * Math.sin(pitchRad);
+            brightStarPos[i * 3 + 2] = -rSpecial * Math.cos(pitchRad) * Math.cos(yawRad);
+
+            brightStarColors[i * 3] = brightness;
+            brightStarColors[i * 3 + 1] = brightness;
+            brightStarColors[i * 3 + 2] = brightness;
+        }
+
+        brightStarsGeo.setAttribute('position', new THREE.BufferAttribute(brightStarPos, 3));
+        brightStarsGeo.setAttribute('color', new THREE.BufferAttribute(brightStarColors, 3));
+
+        const brightStarsMat = new THREE.PointsMaterial({
+            color: 0xffffff,
+            size: 1.6,
+            sizeAttenuation: false,
+            transparent: true,
+            vertexColors: true,
+            opacity: 1.0,
+            fog: false
+        });
+        scene.add(new THREE.Points(brightStarsGeo, brightStarsMat));
+
+        // ─────────────────────────────────────────────────────────
+        //  5. INTEGRACIÓN DEL NÚCLEO DE SINGULARIDAD EN LUGAR DE LA BOLA SIMPLE
+        // ─────────────────────────────────────────────────────────
+        const lightGroup = new THREE.Group();
+        lightGroup.renderOrder = 10; // Evita corte por Z-buffer con el suelo
+
+        // Colores del núcleo de singularidad (centella real: celeste, azul eléctrico, cian)
+        const colL = new THREE.Color('#00f0ff'); // Celeste / Cyan Eléctrico
+        const colR = new THREE.Color('#0044ff'); // Azul Eléctrico Profundo
+        const colSparks = new THREE.Color('#38bdf8'); // Celeste Eléctrico Brillante
+
+        // Material del núcleo de singularidad (depthTest: false evita el corte horizontal con el suelo)
+        const coreMat = new THREE.ShaderMaterial({
+            vertexShader: coreVert,
+            fragmentShader: coreFrag,
+            uniforms: {
+                uTime: { value: 0 },
+                uColor1: { value: colL },
+                uColor2: { value: colR }
+            },
+            transparent: true,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false,
+            depthTest: false
+        });
+
+        const coreGeo = new THREE.IcosahedronGeometry(0.85, 15);
+        const coreMesh = new THREE.Mesh(coreGeo, coreMat);
+        coreMesh.renderOrder = 10;
+        lightGroup.add(coreMesh);
+
+        // Chispas eruptivas delicadas
+        const sparksGeo = new THREE.BufferGeometry();
+        const COUNT = 500;
+        const sP = new Float32Array(COUNT * 3);
+        const sV = new Float32Array(COUNT * 3);
+        const sO = new Float32Array(COUNT);
+
+        for (let i = 0; i < COUNT; i++) {
+            const speed = 0.3 + Math.random() * 1.0;
+            const phi = Math.random() * Math.PI * 2;
+            const theta = (Math.random() - 0.5) * Math.PI;
+            sV[i * 3] = speed * Math.cos(theta) * Math.cos(phi);
+            sV[i * 3 + 1] = speed * Math.sin(theta);
+            sV[i * 3 + 2] = speed * Math.cos(theta) * Math.sin(phi);
+            sO[i] = Math.random() * 5.0;
+        }
+
+        sparksGeo.setAttribute('position', new THREE.BufferAttribute(sP, 3));
+        sparksGeo.setAttribute('aVel', new THREE.BufferAttribute(sV, 3));
+        sparksGeo.setAttribute('aOff', new THREE.BufferAttribute(sO, 1));
+
+        const sparksMat = new THREE.ShaderMaterial({
+            vertexShader: `
+                uniform float uTime;
+                attribute vec3 aVel;
+                attribute float aOff;
+                varying float vLife;
+                void main(){
+                    float t = mod(uTime * 0.8 + aOff, 2.0);
+                    vLife = smoothstep(2.0, 1.5, t) * smoothstep(0.0, 0.2, t);
+                    vec3 p = aVel * t * 2.2;
+                    p.y -= 1.2 * 0.5 * t * t;
+                    vec4 mv = modelViewMatrix * vec4(p, 1.0);
+                    gl_PointSize = (32.0 / -mv.z) * vLife;
+                    gl_Position = projectionMatrix * mv;
+                }
+            `,
+            fragmentShader: `
+                varying float vLife;
+                uniform vec3 uColor;
+                void main(){
+                    float d = length(gl_PointCoord.xy - vec2(0.5));
+                    if(d > 0.5) discard;
+                    float glow = exp(-d * 6.0);
+                    gl_FragColor = vec4(uColor * 2.5, vLife * glow);
+                }
+            `,
+            uniforms: { uTime: { value: 0 }, uColor: { value: colSparks } },
+            transparent: true,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false,
+            depthTest: false
+        });
+
+        const sparksMesh = new THREE.Points(sparksGeo, sparksMat);
+        sparksMesh.renderOrder = 10;
+        lightGroup.add(sparksMesh);
+
+        // Luz de punto brillante sutil proyectada sobre la superficie espejada
+        const pLight = new THREE.PointLight(0x00dfff, 3.2, 40);
+        lightGroup.add(pLight);
+
+        scene.add(lightGroup);
+
+        // Rayos Eléctricos Descendentes a la superficie
+        const raysCount = 2; const segments = 6;
+        const raysGeo = new THREE.BufferGeometry();
+        const raysPos = new Float32Array(raysCount * segments * 6);
+        raysGeo.setAttribute('position', new THREE.BufferAttribute(raysPos, 3));
+        const raysMat = new THREE.LineBasicMaterial({ color: 0x7dd3fc, transparent: true, opacity: 0.45 });
+        const raysLines = new THREE.LineSegments(raysGeo, raysMat);
+        scene.add(raysLines);
+
+        // Suelo Mojado Espejado (Reflector)
+        const floor = new Reflector(new THREE.CircleGeometry(125, 64), {
+            clipBias: 0.003,
+            textureWidth: 512,
+            textureHeight: 512,
+            color: 0x55bbff // Tono celeste azulado acuático vibrante para el agua
+        });
+        floor.rotation.x = -Math.PI / 2;
+        scene.add(floor);
+
+        // Bóveda Celeste / Cúpula de Fondo
+        const bgGeo = new THREE.SphereGeometry(500, 32, 32);
+        const bgMat = new THREE.ShaderMaterial({
+            side: THREE.BackSide,
+            uniforms: { topColor: { value: new THREE.Color(0x000000) }, bottomColor: { value: new THREE.Color(0x000408) } },
+            vertexShader: `varying vec3 vPos; void main() { vPos = (modelMatrix * vec4(position, 1.0)).xyz; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
+            fragmentShader: `uniform vec3 topColor; uniform vec3 bottomColor; varying vec3 vPos; void main() { float h = normalize(vPos).y; gl_FragColor = vec4(mix(bottomColor, topColor, smoothstep(-0.05, 0.15, h)), 1.0); }`
+        });
+        scene.add(new THREE.Mesh(bgGeo, bgMat));
+
+        // Estrellas Fugaces
+        const shootingStars = [new ShootingStar(scene), new ShootingStar(scene)];
+        let nextStarTime = 4000;
+
+        // ─────────────────────────────────────────────────────────
+        //  6. BUCLE PRINCIPAL DE ANIMACIÓN Y RENDER
+        // ─────────────────────────────────────────────────────────
+        const clock = new THREE.Clock();
+
+        function animate(nowTime) {
+            requestAnimationFrame(animate);
+            const time = clock.getElapsedTime();
+
+            // Movimiento fluido del núcleo sobre el agua (altura calibrada para no cortar con el horizonte del plano)
+            const lx = Math.sin(time * 0.28) * 11;
+            const ly = 3.6 + Math.sin(time * 1.1) * 1.2;
+            const lz = Math.cos(time * 0.35) * 7.5;
+
+            lightGroup.position.set(lx, ly, lz);
+
+            // Actualizar shaders del núcleo y partículas
+            coreMat.uniforms.uTime.value = time;
+            sparksMat.uniforms.uTime.value = time;
+            coreMesh.rotation.y = time * 0.3;
+            coreMesh.rotation.x = time * 0.15;
+
+            // Actualizar luz reflejada en el suelo
+            floor.material.uniforms['lightPos'].value.set(lx, ly * 0.5, lz);
+            floor.material.uniforms['time'].value = time;
+
+            // Lanzador de Estrellas Fugaces
+            if (nowTime > nextStarTime) {
+                const s = shootingStars.find(star => !star.active);
+                if (s) s.spawn();
+                nextStarTime = nowTime + 12000 + Math.random() * 18000;
+            }
+            shootingStars.forEach(s => s.update());
+
+            // Rayos Eléctricos hacia el agua
+            const rPos = raysLines.geometry.attributes.position;
+            const rArr = rPos.array;
+            if (ly < 3.8) {
+                raysLines.visible = Math.random() > 0.88;
+                if (raysLines.visible) {
+                    let ptr = 0; const off = 0.12;
+                    for (let r = 0; r < raysCount; r++) {
+                        let px = lx + off, py = ly, pz = lz;
+                        const tx = lx + off + (Math.random() - 0.5), tz = lz + (Math.random() - 0.5);
+                        for (let s = 1; s <= segments; s++) {
+                            const ratio = s / segments;
+                            const cx = THREE.MathUtils.lerp(lx + off, tx, ratio) + (Math.random() - 0.5) * 0.2;
+                            const cy = THREE.MathUtils.lerp(ly, 0, ratio);
+                            const cz = THREE.MathUtils.lerp(lz, tz, ratio) + (Math.random() - 0.5) * 0.2;
+                            rArr[ptr++] = px; rArr[ptr++] = py; rArr[ptr++] = pz;
+                            rArr[ptr++] = cx; rArr[ptr++] = cy; rArr[ptr++] = cz;
+                            px = cx; py = cy; pz = cz;
+                        }
+                    }
+                    rPos.needsUpdate = true;
+                }
+            } else { raysLines.visible = false; }
+
+            controls.update();
+            composer.render();
+        }
+
+        animate(0);
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            composer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+
+</html>

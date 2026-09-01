@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Night Sea — A Playable Dream</title>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        html, body { width: 100%; height: 100%; overflow: hidden; background: #000; }
+        canvas { display: block; }
+    </style>
+</head>
+<body>
+<script type="importmap">
+{
+    "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.165/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.165/examples/jsm/"
+    }
+}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass }     from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+
+// ─────────────────────────────────────────────────────────
+//  RENDERER
+// ─────────────────────────────────────────────────────────
+const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping    = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.05;
+document.body.appendChild(renderer.domElement);
+
+// ─────────────────────────────────────────────────────────
+//  SCENE & CAMERA  — low, intimate, almost touching water
+// ─────────────────────────────────────────────────────────
+const scene  = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(62, window.innerWidth / window.innerHeight, 0.05, 2000);
+camera.position.set(0, 1.8, 12);
+camera.lookAt(0, 0.5, 0);
+
+// ─────────────────────────────────────────────────────────
+//  POST-PROCESSING  — cinematic bloom
+// ─────────────────────────────────────────────────────────
+const composer = new EffectComposer(renderer);
+composer.addPass(new RenderPass(scene, camera));
+const bloom = new UnrealBloomPass(
+    new THREE.Vector2(window.innerWidth, window.innerHeight),
+    1.15,   // strength  — visible halo
+    0.85,   // radius    — soft spread
+    0.58    // threshold — picks up subtle glows too
+);
+composer.addPass(bloom);
+
+// ─────────────────────────────────────────────────────────
+//  FOG  — dense, atmospheric; buries the horizon line
+// ─────────────────────────────────────────────────────────
+scene.fog = new THREE.FogExp2(0x000d1a, 0.022);
+
+// ─────────────────────────────────────────────────────────
+//  SKY DOME
+// ─────────────────────────────────────────────────────────
+const skyMat = new THREE.ShaderMaterial({
+    side: THREE.BackSide,
+    depthWrite: false,
+    uniforms: {
+        uZenith:   { value: new THREE.Color(0x000000) },
+        uMidnight: { value: new THREE.Color(0x010a1c) },
+        uHorizon:  { value: new THREE.Color(0x02152e) },
+    },
+    vertexShader: `
+        varying vec3 vWP;
+        void main() {
+            vWP = (modelMatrix * vec4(position,1.0)).xyz;
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0);
+        }`,
+    fragmentShader: `
+        uniform vec3 uZenith, uMidnight, uHorizon;
+        varying vec3 vWP;
+        void main() {
+            float h = normalize(vWP).y;
+            vec3 c = mix(uHorizon,  uMidnight, smoothstep(0.0,  0.18, h));
+                 c = mix(c,         uZenith,   smoothstep(0.12, 0.65, h));
+            gl_FragColor = vec4(c, 1.0);
+        }`
+});
+scene.add(new THREE.Mesh(new THREE.SphereGeometry(900, 32, 16), skyMat));
+
+// ─────────────────────────────────────────────────────────
+//  ATMOSPHERIC HORIZON GLOW  — kills the hard horizon line
+// ─────────────────────────────────────────────────────────
+const horizonGlowMat = new THREE.ShaderMaterial({
+    transparent: true,
+    depthWrite:  false,
+    blending:    THREE.AdditiveBlending,
+    side:        THREE.DoubleSide,
+    uniforms: {
+        uColor:  { value: new THREE.Color(0x0a2a50) },
+        uColor2: { value: new THREE.Color(0x021428) },
+    },
+    vertexShader: `
+        varying float vY;
+        void main() {
+            vY = position.y;
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        }`,
+    fragmentShader: `
+        uniform vec3 uColor, uColor2;
+        varying float vY;
+        void main() {
+            float t = smoothstep(-2.0, 6.0, vY);
+            float alpha = (1.0 - t) * 0.55;
+            vec3 c = mix(uColor, uColor2, t);
+            gl_FragColor = vec4(c, alpha);
+        }`
+});
+// Wide flat cylinder band at horizon
+const horizonGeo = new THREE.CylinderGeometry(350, 350, 18, 64, 1, true);
+const horizonGlow = new THREE.Mesh(horizonGeo, horizonGlowMat);
+horizonGlow.position.y = -4;
+scene.add(horizonGlow);
+
+// ─────────────────────────────────────────────────────────
+//  STARFIELD  — reduced 40%, depth-layered, subtle
+// ─────────────────────────────────────────────────────────
+function buildStars(count, radius, size, minB, maxB) {
+    const geo = new THREE.BufferGeometry();
+    const pos = new Float32Array(count * 3);
+    const col = new Float32Array(count * 3);
+    for (let i = 0; i < count; i++) {
+        const theta = Math.random() * Math.PI * 2;
+        const phi   = Math.acos(1 - Math.random() * 0.9); // upper hemisphere
+        pos[i*3]   = radius * Math.sin(phi) * Math.cos(theta);
+        pos[i*3+1] = Math.abs(radius * Math.cos(phi)) + 8;
+        pos[i*3+2] = radius * Math.sin(phi) * Math.sin(theta);
+        const b = minB + Math.random() * (maxB - minB);
+        col[i*3]   = b * (0.78 + Math.random() * 0.22);
+        col[i*3+1] = b * (0.88 + Math.random() * 0.12);
+        col[i*3+2] = b;
+    }
+    geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    geo.setAttribute('color',    new THREE.BufferAttribute(col, 3));
+    return new THREE.Points(geo, new THREE.PointsMaterial({
+        size, sizeAttenuation: false, vertexColors: true,
+        transparent: true, opacity: 1, fog: false
+    }));
+}
+const starGroups = [];
+const star1 = buildStars(1600, 600, 0.7, 0.04, 0.28);
+const star2 = buildStars(420,  560, 1.1, 0.28, 0.65);
+const star3 = buildStars(60,   520, 1.7, 0.65, 1.00);
+scene.add(star1); starGroups.push(star1);
+scene.add(star2); starGroups.push(star2);
+scene.add(star3); starGroups.push(star3);
+
+// ─────────────────────────────────────────────────────────
+//  OCEAN  — custom GLSL: big slow swells only, ultra-reflective
+// ─────────────────────────────────────────────────────────
+const OCEAN_RES = 256;
+const oceanGeo  = new THREE.PlaneGeometry(600, 600, OCEAN_RES, OCEAN_RES);
+
+// ── Reflection Setup for Real-time Water Reflection ──
+const reflectionRenderTarget = new THREE.WebGLRenderTarget(512, 512, {
+    minFilter: THREE.LinearFilter,
+    magFilter: THREE.LinearFilter,
+    format: THREE.RGBAFormat
+});
+const reflectionCamera = new THREE.PerspectiveCamera(62, window.innerWidth / window.innerHeight, 0.05, 2000);
+const textureMatrix = new THREE.Matrix4();
+
+const oceanMat = new THREE.ShaderMaterial({
+    side: THREE.DoubleSide,
+    uniforms: {
+        uTime:          { value: 0 },
+        uMoonDir:       { value: new THREE.Vector3(-0.25, 0.88, -0.40).normalize() },
+        uMoonColor:     { value: new THREE.Color(0x6699bb) },
+        uDeepColor:     { value: new THREE.Color(0x000d1a) },
+        uShallowColor:  { value: new THREE.Color(0x042038) },
+        uSkyHorizon:    { value: new THREE.Color(0x02152e) },
+        uOrbPos:        { value: new THREE.Vector3() },
+        uOrbColor:      { value: new THREE.Color(0x66bbff) },
+        uCamPos:        { value: new THREE.Vector3() },
+        uFogColor:      { value: new THREE.Color(0x000d1a) },
+        uFogDensity:    { value: 0.022 },
+        tReflection:    { value: reflectionRenderTarget.texture },
+        uTextureMatrix: { value: textureMatrix },
+    },
+    vertexShader: `
+        uniform float uTime;
+        uniform vec3  uOrbPos;
+        uniform mat4  uTextureMatrix;
+
+        varying vec3  vWorldPos;
+        varying vec3  vNormal;
+        varying float vFog;
+        varying vec4  vReflectUv;
+
+        // Gerstner wave — calm, large, slow
+        void gerstner(inout vec3 p, inout vec3 n,
+                       vec2 dir, float amp, float freq, float speed, float q) {
+            float ph = dot(dir, p.xz) * freq + uTime * speed;
+            float c = cos(ph), s = sin(ph);
+            p.x += dir.x * (q / freq) * c;
+            p.z += dir.y * (q / freq) * c;
+            p.y += amp * s;
+            n.x -= dir.x * freq * amp * c * q;
+            n.z -= dir.y * freq * amp * c * q;
+            n.y -= q * s;
+        }
+
+        void main() {
+            vec3 pos = position;
+            vec3 nor = vec3(0.0, 1.0, 0.0);
+
+            // Only 3 wave sets — BIG and SLOW, meditative
+            gerstner(pos, nor, normalize(vec2( 1.0,  0.30)), 0.38, 0.012, 0.14, 0.45);
+            gerstner(pos, nor, normalize(vec2(-0.55, 1.00)), 0.28, 0.016, 0.11, 0.35);
+            gerstner(pos, nor, normalize(vec2( 0.70,-0.60)), 0.16, 0.030, 0.22, 0.22);
+
+            // Very faint micro-shimmer only
+            float shimmer = sin(pos.x * 0.18 + uTime * 1.2) * 0.018
+                          + cos(pos.z * 0.22 + uTime * 0.9) * 0.012;
+            pos.y += shimmer;
+            nor.y -= shimmer * 0.8;
+
+            // Subtle orb ripple
+            float dx = position.x - uOrbPos.x;
+            float dz = position.z - uOrbPos.z;
+            float dist = sqrt(dx*dx + dz*dz);
+            float orbR = sin(dist * 0.9 - uTime * 1.8) * exp(-dist * 0.06) * 0.055;
+            pos.y += orbR;
+
+            vec4 wp4 = modelMatrix * vec4(pos, 1.0);
+            vWorldPos = wp4.xyz;
+            vNormal   = normalize(normalMatrix * normalize(nor));
+            vFog      = -(modelViewMatrix * vec4(pos, 1.0)).z;
+            vReflectUv = uTextureMatrix * wp4;
+
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+        }
+    `,
+    fragmentShader: `
+        uniform vec3  uMoonDir, uMoonColor;
+        uniform vec3  uDeepColor, uShallowColor, uSkyHorizon;
+        uniform vec3  uOrbPos, uOrbColor;
+        uniform vec3  uCamPos, uFogColor;
+        uniform float uFogDensity;
+        uniform sampler2D tReflection;
+
+        varying vec3  vWorldPos;
+        varying vec3  vNormal;
+        varying float vFog;
+        varying vec4  vReflectUv;
+
+        void main() {
+            if (!gl_FrontFacing) {
+                // Underwater view: looking up at the surface from below
+                vec3 N = -normalize(vNormal); // point normal downwards
+                vec3 V = normalize(uCamPos - vWorldPos);
+                float cosTheta = max(dot(N, V), 0.0);
+                
+                // Total Internal Reflection (TIR) at grazing angles
+                float tir = smoothstep(0.7, 0.45, cosTheta);
+                
+                // Base color: very dark deep blue with refraction in Snell's window
+                vec3 underwaterBase = mix(vec3(0.005, 0.05, 0.12), vec3(0.001, 0.015, 0.04), tir);
+                
+                // Moon light transmission / scattering through surface
+                vec3 H = normalize(uMoonDir + V);
+                float transmission = pow(max(dot(-N, uMoonDir), 0.0), 4.0);
+                vec3 moonSubsurface = uMoonColor * transmission * 0.35 * (1.0 - tir);
+                
+                // Moon specular on the underside
+                float spec = pow(max(dot(N, H), 0.0), 120.0);
+                vec3 moonSpec = uMoonColor * spec * 1.5 * (1.0 - tir);
+                
+                // Orb light transmission
+                vec3 orbDir = normalize(uOrbPos - vWorldPos);
+                float orbDist = length(uOrbPos - vWorldPos);
+                float orbAtten = 1.0 / (1.0 + orbDist * orbDist * 0.03);
+                float orbTransmission = pow(max(dot(-N, orbDir), 0.0), 3.0);
+                vec3 orbSubsurface = uOrbColor * orbTransmission * 0.8 * orbAtten * (1.0 - tir);
+                
+                vec3 color = underwaterBase + moonSubsurface + moonSpec + orbSubsurface;
+                
+                // Exponential depth fog
+                float fogFactor = 1.0 - exp(-uFogDensity * vFog);
+                color = mix(color, uFogColor, fogFactor);
+                
+                gl_FragColor = vec4(color, 1.0);
+                return;
+            }
+
+            vec3 N = normalize(vNormal);
+            vec3 V = normalize(uCamPos - vWorldPos);
+
+            // ── Fresnel — aggressive, feels like real water ──
+            float cosTheta = max(dot(N, V), 0.0);
+            float fresnel   = pow(1.0 - cosTheta, 3.8); // Slightly higher exponent for better grazing reflection
+            fresnel = clamp(fresnel * 1.5, 0.0, 1.0);
+
+            // ── Base color: very dark water ──
+            vec3 base = mix(uDeepColor, uShallowColor, fresnel * 0.50);
+
+            // ── Real-time Reflections ──
+            // Distort projected coordinates using normal
+            vec2 distortion = N.xz * 0.048; // wave wiggles scale
+            vec4 uvReflect = vReflectUv;
+            uvReflect.xy += distortion;
+            vec3 reflectedColor = texture2DProj(tReflection, uvReflect).rgb;
+
+            // Distance based reflection fade (absorption/depth decay)
+            float dist = length(uCamPos - vWorldPos);
+            float reflectionFade = exp(-dist * 0.007);
+            
+            // Blend reflection with base water color
+            vec3 waterColor = mix(base, reflectedColor, fresnel * 0.88 * reflectionFade);
+
+            // ── Moon specular — narrow hard glint ──
+            vec3 H     = normalize(uMoonDir + V);
+            float spec = pow(max(dot(N, H), 0.0), 520.0);
+            vec3 moonSpec = uMoonColor * spec * 5.0;
+
+            // ── Broad soft glimmer ──
+            float broad    = pow(max(dot(N, H), 0.0), 22.0);
+            vec3 moonGlimmer = uMoonColor * broad * 0.18;
+
+            // ── Moonpath ──
+            float mpWidth = exp(-vWorldPos.x * vWorldPos.x * 0.004);
+            float mpFade  = exp(-abs(vWorldPos.z) * 0.018);
+            vec3 moonPath = uMoonColor * mpWidth * mpFade * 0.28 * fresnel;
+
+            // ── Orb contribution ──
+            vec3  orbDir   = normalize(uOrbPos - vWorldPos);
+            float orbDist  = length(uOrbPos - vWorldPos);
+            float orbAtten = 1.0 / (1.0 + orbDist * orbDist * 0.025);
+            float orbDiff  = max(dot(N, orbDir), 0.0);
+            vec3  orbH     = normalize(orbDir + V);
+            float orbSpec  = pow(max(dot(N, orbH), 0.0), 180.0);
+            vec3  orbLight = uOrbColor * (orbDiff * 0.55 + orbSpec * 3.5) * orbAtten;
+
+            // ── Ambient diffuse scatter ──
+            float NdL = max(dot(N, uMoonDir), 0.0);
+            vec3  diff = uDeepColor * (0.5 + NdL * 0.5);
+
+            // ── Compose ──
+            vec3 color = waterColor * (0.6 + NdL * 0.4) + moonSpec + moonGlimmer + moonPath + orbLight;
+
+            // Horizon atmospheric bleed into water surface
+            float horizonBlend = exp(-cosTheta * 3.5);
+            color = mix(color, uSkyHorizon * 0.12, horizonBlend * fresnel);
+
+            // ── Exponential depth fog ──
+            float fogFactor = 1.0 - exp(-uFogDensity * vFog);
+            color = mix(color, uFogColor, fogFactor);
+
+            // ── Subtle rim brightening at grazing angles ──
+            color += vec3(0.01, 0.04, 0.10) * fresnel * 0.5;
+
+            gl_FragColor = vec4(color, 1.0);
+        }
+    `
+});
+
+const ocean = new THREE.Mesh(oceanGeo, oceanMat);
+ocean.rotation.x = -Math.PI / 2;
+scene.add(ocean);
+
+// ─────────────────────────────────────────────────────────
+//  GLOWING ORB  — far away, ethereal, no sprite rectangle
+// ─────────────────────────────────────────────────────────
+
+// Build proper radial gradient texture for glow
+function makeGlowTexture(size = 128) {
+    const canvas = document.createElement('canvas');
+    canvas.width = canvas.height = size;
+    const ctx = canvas.getContext('2d');
+    const g = ctx.createRadialGradient(size/2, size/2, 0, size/2, size/2, size/2);
+    g.addColorStop(0.0, 'rgba(160,220,255, 0.9)');
+    g.addColorStop(0.2, 'rgba(100,180,255, 0.5)');
+    g.addColorStop(0.5, 'rgba(50,120,200,  0.15)');
+    g.addColorStop(1.0, 'rgba(10, 40,100,  0.0)');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, size, size);
+    return new THREE.CanvasTexture(canvas);
+}
+
+const glowTex = makeGlowTexture(256);
+
+const orbGroup = new THREE.Group();
+
+// Core bright point
+const orbCore = new THREE.Mesh(
+    new THREE.SphereGeometry(0.22, 24, 24),
+    new THREE.MeshBasicMaterial({ color: 0xddeeff, transparent: true, fog: false })
+);
+orbGroup.add(orbCore);
+
+// Inner halo — sphere shell
+const innerHalo = new THREE.Mesh(
+    new THREE.SphereGeometry(0.45, 24, 24),
+    new THREE.MeshBasicMaterial({
+        color: 0x66aaff, transparent: true, opacity: 0.18,
+        side: THREE.BackSide, depthWrite: false, blending: THREE.AdditiveBlending, fog: false
+    })
+);
+orbGroup.add(innerHalo);
+
+// Outer halo — radial texture sprite (now circular)
+const haloSprite = new THREE.Sprite(new THREE.SpriteMaterial({
+    map: glowTex, transparent: true, opacity: 0.75,
+    blending: THREE.AdditiveBlending, depthWrite: false, fog: false
+}));
+haloSprite.scale.set(8, 8, 1);
+orbGroup.add(haloSprite);
+
+// Wide atmospheric halo
+const wideHalo = new THREE.Sprite(new THREE.SpriteMaterial({
+    map: glowTex, transparent: true, opacity: 0.30,
+    blending: THREE.AdditiveBlending, depthWrite: false, fog: false
+}));
+wideHalo.scale.set(22, 22, 1);
+orbGroup.add(wideHalo);
+
+// Point light
+const orbPtLight = new THREE.PointLight(0x66aaff, 3.8, 35);
+orbGroup.add(orbPtLight);
+
+// Start far near horizon
+orbGroup.position.set(0, 1.2, -40);
+scene.add(orbGroup);
+
+// ─────────────────────────────────────────────────────────
+//  LIGHTS
+// ─────────────────────────────────────────────────────────
+scene.add(new THREE.AmbientLight(0x05101e, 1.2));
+const moonDirLight = new THREE.DirectionalLight(0x8899bb, 0.40);
+moonDirLight.position.set(-6, 18, -22);
+scene.add(moonDirLight);
+
+// ─────────────────────────────────────────────────────────
+//  SHOOTING STARS  — slow, long trails, infrequent
+// ─────────────────────────────────────────────────────────
+const shootingStars = [];
+
+function spawnStar() {
+    const TRAIL = 40;
+    const geo   = new THREE.BufferGeometry();
+    const pos   = new Float32Array(TRAIL * 3);
+    const col   = new Float32Array(TRAIL * 3);
+    for (let i = 0; i < TRAIL; i++) {
+        const t = i / (TRAIL - 1);
+        col[i*3] = 0.7 + 0.3*t; col[i*3+1] = 0.85 + 0.15*t; col[i*3+2] = 1.0;
+    }
+    geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    geo.setAttribute('color',    new THREE.BufferAttribute(col, 3));
+    const mat  = new THREE.LineBasicMaterial({
+        vertexColors: true, transparent: true, opacity: 0,
+        blending: THREE.AdditiveBlending, depthWrite: false, fog: false
+    });
+    const line = new THREE.Line(geo, mat);
+
+    // Bright head
+    const head = new THREE.Sprite(new THREE.SpriteMaterial({
+        map: makeGlowTexture(64), transparent: true, opacity: 0,
+        blending: THREE.AdditiveBlending, depthWrite: false, fog: false
+    }));
+    head.scale.set(1.5, 1.5, 1);
+
+    const g = new THREE.Group();
+    g.add(line);
+    g.add(head);
+    scene.add(g);
+
+    const sx = (Math.random() - 0.5) * 180;
+    const sy = 50 + Math.random() * 50;
+    const sz = -250 - Math.random() * 150;
+    const headPos = new THREE.Vector3(sx, sy, sz);
+    const dir     = new THREE.Vector3(
+        (Math.random() > 0.5 ? 1 : -1) * (0.4 + Math.random() * 0.5),
+        -(0.1 + Math.random() * 0.2),
+        0.01
+    ).normalize();
+    const speed   = 0.06 + Math.random() * 0.05;
+    const history = [];
+    for (let i = 0; i < TRAIL; i++) history.push(headPos.clone());
+
+    shootingStars.push({ g, line, head, mat, headPos, dir, speed, history, TRAIL, life: 0, maxLife: 2.2 + Math.random() * 1.5 });
+}
+
+setTimeout(spawnStar, 4000);
+setInterval(() => { if (Math.random() < 0.65) spawnStar(); }, 28000);
+
+function tickStars(dt) {
+    for (let i = shootingStars.length - 1; i >= 0; i--) {
+        const s = shootingStars[i];
+        s.life += dt;
+        const p = s.life / s.maxLife;
+        let op = p < 0.12 ? p / 0.12 : p > 0.72 ? (1 - p) / 0.28 : 1.0;
+        op = Math.max(0, op) * 0.9 * (window.underwaterFade !== undefined ? window.underwaterFade : 1.0);
+
+        s.headPos.addScaledVector(s.dir, s.speed);
+        s.history.unshift(s.headPos.clone());
+        if (s.history.length > s.TRAIL) s.history.pop();
+
+        const arr = s.line.geometry.attributes.position.array;
+        for (let j = 0; j < s.TRAIL && j < s.history.length; j++) {
+            const hp = s.history[j];
+            arr[j*3]   = hp.x - s.headPos.x;
+            arr[j*3+1] = hp.y - s.headPos.y;
+            arr[j*3+2] = hp.z - s.headPos.z;
+        }
+        s.line.geometry.attributes.position.needsUpdate = true;
+        s.g.position.copy(s.headPos);
+        s.head.position.set(0, 0, 0);
+        s.mat.opacity = op;
+        s.head.material.opacity = op * 0.9;
+
+        if (p >= 1.0) {
+            scene.remove(s.g);
+            shootingStars.splice(i, 1);
+        }
+    }
+}
+
+// ─────────────────────────────────────────────────────────
+//  CLOCK & MAIN LOOP
+// ─────────────────────────────────────────────────────────
+const clock = new THREE.Clock();
+
+// Precalculated wave direction values to avoid garbage collection overhead in the loop
+const W1_DX = 0.9578, W1_DZ = 0.2873;
+const W2_DX = -0.4819, W2_DZ = 0.8762;
+const W3_DX = 0.7593, W3_DZ = -0.6508;
+
+// Helper to estimate water height at (x, z) at a given time without object allocations
+function getWaterHeight(x, z, time) {
+    let y = 0;
+    // Wave 1
+    const ph1 = (W1_DX * x + W1_DZ * z) * 0.012 + time * 0.14;
+    y += 0.38 * Math.sin(ph1);
+
+    // Wave 2
+    const ph2 = (W2_DX * x + W2_DZ * z) * 0.016 + time * 0.11;
+    y += 0.28 * Math.sin(ph2);
+
+    // Wave 3
+    const ph3 = (W3_DX * x + W3_DZ * z) * 0.030 + time * 0.22;
+    y += 0.16 * Math.sin(ph3);
+
+    // Shimmer
+    const shimmer = Math.sin(x * 0.18 + time * 1.2) * 0.018
+                  + Math.cos(z * 0.22 + time * 0.9) * 0.012;
+    y += shimmer;
+
+    return y;
+}
+
+let targetFogDensity = 0.022;
+const targetFogColor = new THREE.Color(0x000d1a);
+window.underwaterFade = 1.0;
+
+// Orb drift — very slow ellipse, far on horizon
+let orbAngle   = Math.PI * 0.6;
+const ORB_RX   = 22;
+const ORB_RZ   = 6;
+const ORB_SPEED = 0.018; // ~6 min per orbit
+const ORB_Z_BASE = -38;
+
+function animate() {
+    requestAnimationFrame(animate);
+    const dt   = clock.getDelta();
+    const time = clock.getElapsedTime();
+
+    // ── Orb position (slow drift near horizon) ──
+    orbAngle += ORB_SPEED * dt;
+    const ox = Math.sin(orbAngle) * ORB_RX;
+    const oy = 1.1 + Math.sin(time * 0.13) * 0.22;
+    const oz = ORB_Z_BASE + Math.cos(orbAngle * 0.6) * ORB_RZ;
+    orbGroup.position.set(ox, oy, oz);
+
+
+
+    // ── Ocean uniforms ──
+    oceanMat.uniforms.uTime.value = time;
+    oceanMat.uniforms.uCamPos.value.copy(camera.position);
+    oceanMat.uniforms.uOrbPos.value.copy(orbGroup.position);
+
+    // ── Dynamic Fog and Underwater state ──
+    const wHeight = getWaterHeight(camera.position.x, camera.position.z, time);
+    const isUnderwater = camera.position.y < wHeight;
+    
+    if (isUnderwater) {
+        const depth = wHeight - camera.position.y;
+        targetFogDensity = 0.022 + Math.min(depth * 0.18, 0.23);
+        targetFogColor.lerpColors(new THREE.Color(0x000d1a), new THREE.Color(0x000612), Math.min(depth * 0.8, 1.0));
+        window.underwaterFade = Math.max(0, 1.0 - depth * 1.5);
+    } else {
+        targetFogDensity = 0.022;
+        targetFogColor.setHex(0x000d1a);
+        window.underwaterFade = 1.0;
+    }
+    
+    scene.fog.density += (targetFogDensity - scene.fog.density) * 0.08;
+    scene.fog.color.lerp(targetFogColor, 0.08);
+    renderer.setClearColor(scene.fog.color);
+    oceanMat.uniforms.uFogColor.value.copy(scene.fog.color);
+    oceanMat.uniforms.uFogDensity.value = scene.fog.density;
+
+    // Orb pulse & underwater fade
+    const pulse = 0.85 + Math.sin(time * 0.45) * 0.12 + Math.sin(time * 1.1) * 0.04;
+    innerHalo.material.opacity = 0.18 * pulse * window.underwaterFade;
+    haloSprite.material.opacity  = 0.72 * pulse * window.underwaterFade;
+    wideHalo.material.opacity    = 0.28 * pulse * window.underwaterFade;
+    orbCore.material.opacity     = window.underwaterFade;
+    orbPtLight.intensity         = 3.6 * pulse * window.underwaterFade;
+
+    // Fade stars and sky dome underwater
+    starGroups.forEach(g => {
+        g.material.opacity = window.underwaterFade;
+    });
+    skyMat.uniforms.uZenith.value.setRGB(0,0,0).lerp(new THREE.Color(0x000000), window.underwaterFade);
+    skyMat.uniforms.uMidnight.value.setHex(0x010a1c).multiplyScalar(window.underwaterFade);
+    skyMat.uniforms.uHorizon.value.setHex(0x02152e).multiplyScalar(window.underwaterFade);
+    horizonGlowMat.uniforms.uColor.value.setHex(0x0a2a50).multiplyScalar(window.underwaterFade);
+    horizonGlowMat.uniforms.uColor2.value.setHex(0x021428).multiplyScalar(window.underwaterFade);
+
+    // ── Shooting stars ──
+    tickStars(dt);
+
+    // ── Camera — imperceptible breathing, stays low ──
+    const tx = Math.sin(time * 0.038) * 0.55 + Math.sin(time * 0.011) * 0.90;
+    const ty = 1.8 + Math.sin(time * 0.07) * 0.10 + Math.cos(time * 0.044) * 0.06;
+    const tz = 12  + Math.sin(time * 0.049) * 0.40;
+    camera.position.x += (tx - camera.position.x) * 0.012;
+    camera.position.y += (ty - camera.position.y) * 0.012;
+    camera.position.z += (tz - camera.position.z) * 0.012;
+    camera.lookAt(ox * 0.12, 0.5, -5);  // gaze drifts subtly toward orb
+
+    // ── Update Reflection Camera & Matrix ──
+    reflectionCamera.position.copy(camera.position);
+    reflectionCamera.position.y = -camera.position.y;
+    
+    const dir = new THREE.Vector3();
+    camera.getWorldDirection(dir);
+    dir.y = -dir.y;
+    
+    const refLookAt = new THREE.Vector3().copy(reflectionCamera.position).add(dir);
+    reflectionCamera.lookAt(refLookAt);
+    reflectionCamera.updateMatrixWorld();
+    
+    textureMatrix.set(
+        0.5, 0.0, 0.0, 0.5,
+        0.0, 0.5, 0.0, 0.5,
+        0.0, 0.0, 0.5, 0.5,
+        0.0, 0.0, 0.0, 1.0
+    );
+    textureMatrix.multiply(reflectionCamera.projectionMatrix);
+    textureMatrix.multiply(reflectionCamera.matrixWorldInverse);
+    
+    if (!isUnderwater) {
+        ocean.visible = false;
+        renderer.setRenderTarget(reflectionRenderTarget);
+        renderer.clear();
+        renderer.render(scene, reflectionCamera);
+        renderer.setRenderTarget(null);
+        ocean.visible = true;
+    }
+
+    composer.render();
+}
+
+animate();
+
+// ─────────────────────────────────────────────────────────
+//  RESIZE
+// ─────────────────────────────────────────────────────────
+window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    reflectionCamera.aspect = window.innerWidth / window.innerHeight;
+    reflectionCamera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    composer.setSize(window.innerWidth, window.innerHeight);
+});
+</script>
+</body>
+</html>
